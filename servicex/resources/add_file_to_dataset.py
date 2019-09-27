@@ -25,17 +25,43 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import json
 
-from kubernetes import client, config
+from flask import request
 
-# Configs can be set in Configuration class directly or using helper utility
-config.load_kube_config()
+from servicex.models import TransformRequest
+from servicex.resources.servicex_resource import ServiceXResource
 
 
-def launch_transformer_jobs():
-    v1 = client.CoreV1Api()
-    print("Listing pods with their IPs:")
-    ret = v1.list_pod_for_all_namespaces(watch=False)
-    for i in ret.items:
-        print("%s\t%s\t%s" % (
-            i.status.pod_ip, i.metadata.namespace, i.metadata.name))
+class AddFileToDataset(ServiceXResource):
+    @classmethod
+    def make_api(cls, rabbitmq_adaptor):
+        cls.rabbitmq_adaptor = rabbitmq_adaptor
+        return cls
+
+    def put(self, request_id):
+        add_file_request = request.get_json()
+        submitted_request = TransformRequest.return_request(request_id)
+
+        transform_request = {
+            'request-id': submitted_request.request_id,
+            'columns': submitted_request.columns,
+            'file-path': add_file_request['file_path'],
+            "service-endpoint": self._generate_advertised_endpoint(
+                "servicex/transformation/" + request_id
+            )
+        }
+
+        try:
+            self.rabbitmq_adaptor.basic_publish(exchange='transformation_requests',
+                                                routing_key=request_id,
+                                                body=json.dumps(transform_request))
+
+            return {
+                "request-id": str(request_id),
+                "file-id": 42
+            }
+
+        except Exception as eek:
+            print(eek)
+            return {'message': 'Something went wrong'}, 500

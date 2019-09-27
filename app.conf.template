@@ -5,7 +5,7 @@
 SECRET_KEY = 'abc123!'
 
 # Based on https://codeburst.io/jwt-authorization-in-flask-c63c1acf4eeb
-SQLALCHEMY_DATABASE_URI = 'sqlite:///../sqlite/app.db'
+SQLALCHEMY_DATABASE_URI = 'sqlite:///sqlite/app.db'
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 SECRET_KEY = 'some-secret-string'
 JWT_SECRET_KEY = 'jwt-secret-string'
@@ -15,7 +15,7 @@ TRANSFORMER_RABBIT_MQ_URL= 'amqp://user:leftfoot1@host.docker.internal:30672/%2F
 
 # This will be mounted into the transformer pod's /data directory
 TRANSFORMER_LOCAL_PATH="/Users/bengal1/dev/IRIS-HEP/data"
-TRANSFORMER_NAMESPACE="default"
+
 
 ADVERTISED_HOSTNAME= 'host.docker.internal:5000'
 

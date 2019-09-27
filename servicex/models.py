@@ -25,8 +25,11 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from run import db
+from sqlalchemy import func
 from passlib.hash import pbkdf2_sha256 as sha256
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
 
 
 class TransformRequest(db.Model):
@@ -37,13 +40,29 @@ class TransformRequest(db.Model):
         return {
             'request_id': x.request_id,
             'did': x.did,
-            'columns': x.columns
+            'columns': x.columns,
+            'image': x.image,
+            'chunk-size': x.chunk_size,
+            'workers': x.workers,
+            'messaging-backend': x.messaging_backend,
+            'kafka-broker': x.kafka_broker
         }
 
     id = db.Column(db.Integer, primary_key=True)
     did = db.Column(db.String(120), unique=False, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=False)
     request_id = db.Column(db.String(48), unique=True, nullable=False)
+    image = db.Column(db.String(128), nullable=True)
+    chunk_size = db.Column(db.Integer, nullable=True)
+    workers = db.Column(db.Integer, nullable=True)
+    messaging_backend = db.Column(db.String(32), nullable=True)
+    kafka_broker = db.Column(db.String(128), nullable=True)
+
+    files = db.Column(db.Integer, nullable=True)
+    files_skipped = db.Column(db.Integer, nullable=True)
+    total_events = db.Column(db.Integer, nullable=True)
+    total_bytes = db.Column(db.Integer, nullable=True)
+    did_lookup_time = db.Column(db.Integer, nullable=True)
 
     def save_to_db(self):
         db.session.add(self)
@@ -53,9 +72,61 @@ class TransformRequest(db.Model):
     def return_all(cls):
         return {'requests': list(map(lambda x: cls.to_json(x),
                                      TransformRequest.query.all()))}
+
     @classmethod
     def return_request(cls, request_id):
-        return cls.to_json(cls.query.filter_by(request_id=request_id).first())
+        return cls.query.filter_by(request_id=request_id).one()
+
+    @classmethod
+    def update_request(cls, request_obj):
+        db.session.commit()
+
+    @classmethod
+    def files_remaining(cls, request_id):
+        submitted_request = cls.return_request(request_id)
+        count = TransformationResult.count(request_id)
+        if submitted_request.files and count:
+            return submitted_request.files - count
+        else:
+            return None
+
+
+class TransformationResult(db.Model):
+    __tablename__ = 'transform_result'
+
+    id = db.Column(db.Integer, primary_key=True)
+    did = db.Column(db.String(120), unique=False, nullable=False)
+    file_path = db.Column(db.String(120), unique=False, nullable=False)
+    request_id = db.Column(db.String(48), unique=False, nullable=False)
+    transform_status = db.Column(db.String(10), nullable=False)
+    transform_time = db.Column(db.Integer, nullable=True)
+    messages = db.Column(db.Integer, nullable=True)
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.commit()
+
+    @classmethod
+    def count(cls, request_id):
+        return cls.query.filter_by(request_id=request_id).count()
+
+    @classmethod
+    def statistics(cls, request_id):
+        rslt = cls.query.add_columns(
+            func.sum(TransformationResult.messages).label('total_msgs'),
+            func.min(TransformationResult.transform_time).label('min_time'),
+            func.max(TransformationResult.transform_time).label('max_time'),
+            func.avg(TransformationResult.transform_time).label('avg_time'),
+            func.sum(TransformationResult.transform_time).label('total_time')
+        ).filter_by(request_id=request_id).one()
+
+        return {
+            "total-messages": rslt.total_msgs,
+            "min-time": rslt.min_time,
+            "max-time": rslt.max_time,
+            "avg-time": rslt.avg_time,
+            "total-time": rslt.total_time
+        }
 
 
 class UserModel(db.Model):
@@ -73,11 +144,9 @@ class UserModel(db.Model):
     def generate_hash(password):
         return sha256.hash(password)
 
-
     @staticmethod
     def verify_hash(password, hash):
         return sha256.verify(password, hash)
-
 
     @classmethod
     def find_by_username(cls, username):
@@ -99,6 +168,5 @@ class UserModel(db.Model):
             num_rows_deleted = db.session.query(cls).delete()
             db.session.commit()
             return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
-        except:
+        except Exception:
             return {'message': 'Something went wrong'}
-

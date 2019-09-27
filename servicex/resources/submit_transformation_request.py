@@ -26,52 +26,65 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
-
-import pika
-from flask_restful import Resource, reqparse
 import uuid
-from models import TransformRequest
-from run import app
 
-rabbitmq = pika.BlockingConnection(
-    pika.ConnectionParameters(
-        app.config['RABBIT_MQ_URL']))
+from flask_restful import reqparse
 
-channel = rabbitmq.channel()
-channel.queue_declare(queue='did_requests')
-channel.queue_declare(queue='validation_requests')
-channel.queue_declare(queue='transformation_requests')
-
+from servicex.models import TransformRequest
+from servicex.resources.servicex_resource import ServiceXResource
 
 parser = reqparse.RequestParser()
 parser.add_argument('did', help='This field cannot be blank',
                     required=True)
 parser.add_argument('columns', help='This field cannot be blank',
                     required=True)
+parser.add_argument('image', required=False)
+parser.add_argument('chunk-size', required=False, type=int)
+parser.add_argument('workers', required=False, type=int)
+parser.add_argument('messaging-backend', required=False)
+parser.add_argument('kafka-broker', required=False)
 
 
-class SubmitTransformationRequest(Resource):
+class SubmitTransformationRequest(ServiceXResource):
+    @classmethod
+    def make_api(cls, rabbitmq_adaptor):
+        cls.rabbitmq_adaptor = rabbitmq_adaptor
+        return cls
+
     def post(self):
-        request = parser.parse_args()
-        request_id = uuid.uuid4()
+        transformation_request = parser.parse_args()
+        request_id = str(uuid.uuid4())
 
         request_rec = TransformRequest(
-            did=request['did'],
-            columns=request['columns'],
-            request_id=str(request_id)
+            did=transformation_request['did'],
+            columns=transformation_request['columns'],
+            request_id=str(request_id),
+            image=transformation_request['image'],
+            chunk_size=transformation_request['chunk-size'],
+            messaging_backend=transformation_request['messaging-backend'],
+            kafka_broker=transformation_request['kafka-broker'],
+            workers=transformation_request['workers']
         )
 
         did_request = {
             "request_id": request_rec.request_id,
             "did": request_rec.did,
-            "columns": request_rec.columns,
-            "status-endpoint": "http://host.docker.internal:5000/servicex/transformation/"+request_rec.request_id+"/status"
+            "service-endpoint": self._generate_advertised_endpoint(
+                "servicex/transformation/" +
+                request_rec.request_id
+            )
         }
 
         try:
-            channel.basic_publish(exchange='',
-                                  routing_key='did_requests',
-                                  body=json.dumps(did_request))
+            self.rabbitmq_adaptor.setup_queue(request_id)
+
+            self.rabbitmq_adaptor.bind_queue_to_exchange(
+                exchange="transformation_requests",
+                queue=request_id)
+
+            self.rabbitmq_adaptor.basic_publish(exchange='',
+                                                routing_key='did_requests',
+                                                body=json.dumps(did_request))
 
             request_rec.save_to_db()
             return {
@@ -81,25 +94,3 @@ class SubmitTransformationRequest(Resource):
         except Exception as eek:
             print(eek)
             return {'message': 'Something went wrong'}, 500
-
-
-status_parser = reqparse.RequestParser()
-status_parser.add_argument('timestamp', help='This field cannot be blank',
-                           required=True)
-status_parser.add_argument('status', help='This field cannont be blank',
-                           required=True)
-
-
-class TransformationStatus(Resource):
-    def post(self, request_id):
-        status = status_parser.parse_args()
-        status.request_id = request_id
-        print(status)
-
-
-class QueryTransformationRequest(Resource):
-    def get(self, request_id=None):
-        if request_id:
-            return TransformRequest.return_request(request_id)
-        else:
-            return TransformRequest.return_all()
