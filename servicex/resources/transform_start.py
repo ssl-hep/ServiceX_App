@@ -25,7 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import current_app, request
+from flask import current_app
 
 from servicex.models import TransformRequest
 from servicex.resources.servicex_resource import ServiceXResource
@@ -42,18 +42,23 @@ class TransformStart(ServiceXResource):
         submitted_request = TransformRequest.return_request(request_id)
 
         if current_app.config['TRANSFORMER_MANAGER_ENABLED']:
-            # Setup the kafka topic with the correct number of partitions and max
-            # message size
-            max_event_size = request.json['info']['max-event-size']*submitted_request.chunk_size
-            kafka = KafkaTopicManager(submitted_request.kafka_broker)
-            kafka.create_topic(request_id, max_message_size=max_event_size, num_partitions=100)
+
+            if submitted_request.result_destination == 'kafka':
+                # Setup the kafka topic with the correct number of partitions and max
+                # message size
+                max_message_size = 1920000
+                kafka = KafkaTopicManager(submitted_request.kafka_broker)
+                kafka.create_topic(request_id,
+                                   max_message_size=max_message_size,
+                                   num_partitions=100)
+
             rabbitmq_uri = current_app.config['TRANSFORMER_RABBIT_MQ_URL']
             namepsace = current_app.config['TRANSFORMER_NAMESPACE']
-            print(rabbitmq_uri)
+
             self.transformer_manager.launch_transformer_jobs(
-                image=submitted_request.image,
-                request_id=request_id,
+                image=submitted_request.image, request_id=request_id,
                 workers=submitted_request.workers,
-                chunk_size=submitted_request.chunk_size,
-                rabbitmq_uri=rabbitmq_uri,
-                namespace=namepsace)
+                chunk_size=submitted_request.chunk_size, rabbitmq_uri=rabbitmq_uri,
+                namespace=namepsace,
+                result_destination=submitted_request.result_destination,
+                result_format=submitted_request.result_format)

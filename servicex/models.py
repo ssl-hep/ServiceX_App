@@ -25,8 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from sqlalchemy import func
-from passlib.hash import pbkdf2_sha256 as sha256
+from sqlalchemy import func, ForeignKey
 from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
@@ -44,24 +43,27 @@ class TransformRequest(db.Model):
             'image': x.image,
             'chunk-size': x.chunk_size,
             'workers': x.workers,
-            'messaging-backend': x.messaging_backend,
+            'result-destination': x.result_destination,
+            'result-format': x.result_format,
             'kafka-broker': x.kafka_broker
         }
 
     id = db.Column(db.Integer, primary_key=True)
-    did = db.Column(db.String(120), unique=False, nullable=False)
+    submit_time = db.Column(db.DateTime, nullable=False)
+    did = db.Column(db.String(512), unique=False, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=False)
     request_id = db.Column(db.String(48), unique=True, nullable=False)
     image = db.Column(db.String(128), nullable=True)
     chunk_size = db.Column(db.Integer, nullable=True)
     workers = db.Column(db.Integer, nullable=True)
-    messaging_backend = db.Column(db.String(32), nullable=True)
+    result_destination = db.Column(db.String(32), nullable=False)
+    result_format = db.Column(db.String(32), nullable=False)
     kafka_broker = db.Column(db.String(128), nullable=True)
 
     files = db.Column(db.Integer, nullable=True)
     files_skipped = db.Column(db.Integer, nullable=True)
-    total_events = db.Column(db.Integer, nullable=True)
-    total_bytes = db.Column(db.Integer, nullable=True)
+    total_events = db.Column(db.BigInteger, nullable=True)
+    total_bytes = db.Column(db.BigInteger, nullable=True)
     did_lookup_time = db.Column(db.Integer, nullable=True)
 
     def save_to_db(self):
@@ -85,8 +87,8 @@ class TransformRequest(db.Model):
     def files_remaining(cls, request_id):
         submitted_request = cls.return_request(request_id)
         count = TransformationResult.count(request_id)
-        if submitted_request.files and count:
-            return submitted_request.files - count
+        if submitted_request.files:
+            return submitted_request.files - int(count or 0)
         else:
             return None
 
@@ -95,12 +97,36 @@ class TransformationResult(db.Model):
     __tablename__ = 'transform_result'
 
     id = db.Column(db.Integer, primary_key=True)
-    did = db.Column(db.String(120), unique=False, nullable=False)
-    file_path = db.Column(db.String(120), unique=False, nullable=False)
+    did = db.Column(db.String(512), unique=False, nullable=False)
+    file_id = db.Column(db.Integer, ForeignKey('files.id'))
+    file_path = db.Column(db.String(512), unique=False, nullable=False)
     request_id = db.Column(db.String(48), unique=False, nullable=False)
-    transform_status = db.Column(db.String(10), nullable=False)
+    transform_status = db.Column(db.String(120), nullable=False)
     transform_time = db.Column(db.Integer, nullable=True)
+    total_events = db.Column(db.BigInteger, nullable=True)
+    total_bytes = db.Column(db.BigInteger, nullable=True)
+    avg_rate = db.Column(db.Float, nullable=True)
     messages = db.Column(db.Integer, nullable=True)
+
+    @classmethod
+    def to_json_list(cls, a_list):
+        return [TransformationResult.to_json(msg) for msg in a_list]
+
+    @classmethod
+    def to_json(cls, x):
+        return {
+            'id': x.id,
+            'request-id': x.request_id,
+            'did': x.did,
+            'file-id': x.id,
+            'file-path': x.file_path,
+            'transform_status': x.transform_status,
+            'transform_time': x.transform_time,
+            'total-events': x.total_events,
+            'total-bytes': x.total_bytes,
+            'avg-rate': x.avg_rate,
+            'messages': x.messages
+        }
 
     def save_to_db(self):
         db.session.add(self)
@@ -111,62 +137,67 @@ class TransformationResult(db.Model):
         return cls.query.filter_by(request_id=request_id).count()
 
     @classmethod
-    def statistics(cls, request_id):
-        rslt = cls.query.add_columns(
+    def failed_files(cls, request_id):
+        return cls.query.filter(TransformationResult.request_id == request_id,
+                                TransformationResult.transform_status != 'success').count()
+
+    @classmethod
+    def get_all_status(cls, request_id):
+        return cls.query.filter(TransformationResult.request_id == request_id).all()
+
+    @classmethod
+    def statistics(cls, request_key):
+        rslt_list = db.session.query(
+            TransformationResult.request_id,
             func.sum(TransformationResult.messages).label('total_msgs'),
             func.min(TransformationResult.transform_time).label('min_time'),
             func.max(TransformationResult.transform_time).label('max_time'),
             func.avg(TransformationResult.transform_time).label('avg_time'),
-            func.sum(TransformationResult.transform_time).label('total_time')
-        ).filter_by(request_id=request_id).one()
+            func.sum(TransformationResult.transform_time).label('total_time'),
+            func.avg(TransformationResult.avg_rate).label('avg_rate'),
+            func.sum(TransformationResult.total_bytes).label('total_bytes'),
+            func.sum(TransformationResult.total_events).label('total_events')
+        ).group_by(TransformationResult.request_id).filter_by(
+            request_id=request_key).all()
+
+        if len(rslt_list) == 0:
+            return None
+
+        rslt = rslt_list[0]
 
         return {
-            "total-messages": rslt.total_msgs,
-            "min-time": rslt.min_time,
-            "max-time": rslt.max_time,
-            "avg-time": rslt.avg_time,
-            "total-time": rslt.total_time
+            "total-messages": int(rslt.total_msgs),
+            "min-time": int(rslt.min_time),
+            "max-time": int(rslt.max_time),
+            "avg-time": float(rslt.avg_time),
+            "total-time": int(rslt.total_time),
+            "avg-rate": float(rslt.avg_rate),
+            "total-bytes": int(rslt.total_bytes),
+            "total-events": int(rslt.total_events)
         }
 
 
-class UserModel(db.Model):
-    __tablename__ = 'users'
+class DatasetFile(db.Model):
+    __tablename__ = 'files'
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
+    request_id = db.Column(db.String(48),
+                           ForeignKey('requests.request_id'),
+                           unique=False,
+                           nullable=False)
+    file_path = db.Column(db.String(512), unique=False, nullable=False)
+
+    adler32 = db.Column(db.String(48), nullable=True)
+    file_size = db.Column(db.BigInteger, nullable=True)
+    file_events = db.Column(db.BigInteger, nullable=True)
 
     def save_to_db(self):
         db.session.add(self)
         db.session.commit()
 
-    @staticmethod
-    def generate_hash(password):
-        return sha256.hash(password)
-
-    @staticmethod
-    def verify_hash(password, hash):
-        return sha256.verify(password, hash)
-
     @classmethod
-    def find_by_username(cls, username):
-        return cls.query.filter_by(username=username).first()
+    def get_by_id(cls, dataset_file_id):
+        return cls.query.filter_by(id=dataset_file_id).one()
 
-    @classmethod
-    def return_all(cls):
-        def to_json(x):
-            return {
-                'username': x.username,
-                'password': x.password
-            }
-
-        return {'users': list(map(lambda x: to_json(x), UserModel.query.all()))}
-
-    @classmethod
-    def delete_all(cls):
-        try:
-            num_rows_deleted = db.session.query(cls).delete()
-            db.session.commit()
-            return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
-        except Exception:
-            return {'message': 'Something went wrong'}
+    def get_path_id(self):
+        return self.request_id+":"+str(self.id)

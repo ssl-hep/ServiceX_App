@@ -30,9 +30,11 @@ import os
 from flask import Flask
 from flask_restful import Api
 
+from servicex.elasticsearch_adaptor import ElasticSearchAdapter
 from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
+from servicex.object_store_manager import ObjectStoreManager
 
 
 def _init_rabbit_mq(rabbitmq_url):
@@ -43,10 +45,15 @@ def _init_rabbit_mq(rabbitmq_url):
     rabbit_mq_adaptor.setup_queue('did_requests')
     rabbit_mq_adaptor.setup_queue('validation_requests')
     rabbit_mq_adaptor.setup_exchange('transformation_requests')
+    rabbit_mq_adaptor.setup_exchange('transformation_failures')
     return rabbit_mq_adaptor
 
 
-def create_app(test_config=None, provided_transformer_manager=None, provided_rabbit_adaptor=None):
+def create_app(test_config=None,
+               provided_transformer_manager=None,
+               provided_rabbit_adaptor=None,
+               provided_object_store=None,
+               provided_elasticsearch_adapter=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 
@@ -58,6 +65,16 @@ def create_app(test_config=None, provided_transformer_manager=None, provided_rab
 
     with app.app_context():
 
+        if app.config['OBJECT_STORE_ENABLED']:
+            if not provided_object_store:
+                object_store = ObjectStoreManager(app.config['MINIO_URL'],
+                                                  username=app.config['MINIO_ACCESS_KEY'],
+                                                  password=app.config['MINIO_SECRET_KEY'])
+            else:
+                object_store = provided_object_store
+        else:
+            object_store = None
+
         if app.config['TRANSFORMER_MANAGER_ENABLED'] and not provided_transformer_manager:
             transformer_manager = TransformerManager(app.config['TRANSFORMER_MANAGER_MODE'])
         else:
@@ -67,6 +84,18 @@ def create_app(test_config=None, provided_transformer_manager=None, provided_rab
             rabbit_adaptor = _init_rabbit_mq(app.config['RABBIT_MQ_URL'])
         else:
             rabbit_adaptor = provided_rabbit_adaptor
+
+        if 'ELASTIC_SEARCH_LOGGING_ENABLED' in app.config \
+                and app.config['ELASTIC_SEARCH_LOGGING_ENABLED']\
+                and not provided_elasticsearch_adapter:
+            elasticsearch_adaptor = ElasticSearchAdapter(
+                app.config['ES_HOST'],
+                app.config['ES_PORT'],
+                app.config['ES_USER'],
+                app.config['ES_PASS']
+            )
+        else:
+            elasticsearch_adaptor = provided_elasticsearch_adapter
 
         api = Api(app)
 
@@ -82,6 +111,7 @@ def create_app(test_config=None, provided_transformer_manager=None, provided_rab
             db.init_app(app)
             db.create_all()
 
-        add_routes(api, transformer_manager, rabbit_adaptor)
+        add_routes(api, transformer_manager, rabbit_adaptor, object_store,
+                   elasticsearch_adaptor)
 
     return app
