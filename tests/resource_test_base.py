@@ -60,7 +60,8 @@ class ResourceTestBase:
                      rabbit_adaptor=None,
                      object_store=None,
                      elasticsearch_adapter=None,
-                     code_gen_service=None):
+                     code_gen_service=None,
+                     lookup_result_processor=None):
         config = ResourceTestBase._app_config()
         config['TRANSFORMER_MANAGER_ENABLED'] = False
         config['TRANSFORMER_MANAGER_MODE'] = 'external'
@@ -69,7 +70,8 @@ class ResourceTestBase:
             config.update(additional_config)
 
         app = create_app(config, transformation_manager, rabbit_adaptor,
-                         object_store, elasticsearch_adapter, code_gen_service)
+                         object_store, elasticsearch_adapter, code_gen_service,
+                         lookup_result_processor)
 
         return app.test_client()
 
@@ -79,6 +81,7 @@ class ResourceTestBase:
         transform_request.submit_time = 1000
         transform_request.request_id = 'BR549'
         transform_request.columns = 'electron.eta(), muon.pt()'
+        transform_request.tree_name = 'Events'
         transform_request.chunk_size = 1000
         transform_request.workers = 42
         transform_request.did = '123-456-789'
