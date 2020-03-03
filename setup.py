@@ -64,6 +64,7 @@ setup(
             'pytest>=3.6',
             'pytest-flask',
             'coverage',
+            'codecov',
             'pytest-mock',
             'flake8'
         ],
