@@ -34,6 +34,8 @@ db = SQLAlchemy()
 class TransformRequest(db.Model):
     __tablename__ = 'requests'
 
+    _cache = {}
+
     @classmethod
     def to_json(cls, x):
         return {
@@ -56,7 +58,8 @@ class TransformRequest(db.Model):
     submit_time = db.Column(db.DateTime, nullable=False)
     did = db.Column(db.String(512), unique=False, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=True)
-    selection = db.Column(db.String(1024), unique=False, nullable=True)
+    max_string_size = 10485760
+    selection = db.Column(db.String(max_string_size), unique=False, nullable=True)
     tree_name = db.Column(db.String(512), unique=False, nullable=True)
     request_id = db.Column(db.String(48), unique=True, nullable=False)
     image = db.Column(db.String(128), nullable=True)
@@ -76,7 +79,7 @@ class TransformRequest(db.Model):
 
     def save_to_db(self):
         db.session.add(self)
-        db.session.commit()
+        db.session.flush()
 
     @classmethod
     def return_all(cls):
@@ -84,12 +87,17 @@ class TransformRequest(db.Model):
                                      TransformRequest.query.all()))}
 
     @classmethod
-    def return_request(cls, request_id):
-        return cls.query.filter_by(request_id=request_id).one()
+    def get_request_cached(cls, request_id):
+        if request_id in TransformRequest._cache:
+            return TransformRequest._cache[request_id]
+
+        live_val = TransformRequest.return_request(request_id)
+        TransformRequest._cache[request_id] = live_val.id
+        return live_val.id
 
     @classmethod
-    def update_request(cls, request_obj):
-        db.session.commit()
+    def return_request(cls, request_id):
+        return cls.query.filter_by(request_id=request_id).one()
 
     @classmethod
     def files_remaining(cls, request_id):
@@ -138,7 +146,7 @@ class TransformationResult(db.Model):
 
     def save_to_db(self):
         db.session.add(self)
-        db.session.commit()
+        db.session.flush()
 
     @classmethod
     def count(cls, request_id):
@@ -201,7 +209,7 @@ class DatasetFile(db.Model):
 
     def save_to_db(self):
         db.session.add(self)
-        db.session.commit()
+        db.session.flush()
 
     @classmethod
     def get_by_id(cls, dataset_file_id):
@@ -209,3 +217,23 @@ class DatasetFile(db.Model):
 
     def get_path_id(self):
         return self.request_id+":"+str(self.id)
+
+
+class FileStatus(db.Model):
+    __tablename__ = 'file_status'
+
+    id = db.Column(db.Integer, primary_key=True)
+    file_id = db.Column(db.Integer, nullable=False)
+    request_id = db.Column(db.String(48),
+                           ForeignKey('requests.request_id'),
+                           unique=False,
+                           nullable=False)
+    status = db.Column(db.String(128), nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False)
+    pod_name = db.Column(db.String(128), nullable=True)
+
+    info = db.Column(db.String(4096), nullable=True)
+
+    def save_to_db(self):
+        db.session.add(self)
+        db.session.flush()

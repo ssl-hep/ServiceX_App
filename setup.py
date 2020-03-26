@@ -61,9 +61,10 @@ setup(
     ],
     extras_require={
         'test': [
-            'pytest>=3.6',
+            'pytest>=5.2',
             'pytest-flask',
             'coverage',
+            'codecov',
             'pytest-mock',
             'flake8'
         ],
