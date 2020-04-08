@@ -38,6 +38,8 @@ from flask_restful import reqparse
 from servicex.models import TransformRequest, DatasetFile, db
 from servicex.resources.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
+from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, verify_jwt_in_request, jwt_refresh_token_required, get_jwt_identity)
+
 
 parser = reqparse.RequestParser()
 parser.add_argument('did', help='Dataset Identifier. Provide this or file-list',
@@ -89,7 +91,9 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.lookup_result_processor = lookup_result_processor
         return cls
 
+    @jwt_required
     def post(self):
+        print("STARTING")
         try:
             transformation_request = parser.parse_args()
             print("object store ", self.object_store)

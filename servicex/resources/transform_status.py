@@ -36,6 +36,7 @@ status_parser.add_argument('timestamp', help='This field cannot be blank',
 status_parser.add_argument('status', help='This field cannot be blank',
                            required=True)
 
+
 status_request_parser = reqparse.RequestParser()
 status_request_parser.add_argument('details', type=bool, default=False,
                                    required=False, location='args')

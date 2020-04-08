@@ -27,14 +27,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from sqlalchemy import func, ForeignKey
 from flask_sqlalchemy import SQLAlchemy
+from passlib.hash import pbkdf2_sha256 as sha256
+
 
 db = SQLAlchemy()
 
 
 class TransformRequest(db.Model):
     __tablename__ = 'requests'
-
-    _cache = {}
 
     @classmethod
     def to_json(cls, x):
@@ -58,8 +58,7 @@ class TransformRequest(db.Model):
     submit_time = db.Column(db.DateTime, nullable=False)
     did = db.Column(db.String(512), unique=False, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=True)
-    max_string_size = 10485760
-    selection = db.Column(db.String(max_string_size), unique=False, nullable=True)
+    selection = db.Column(db.String(1024), unique=False, nullable=True)
     tree_name = db.Column(db.String(512), unique=False, nullable=True)
     request_id = db.Column(db.String(48), unique=True, nullable=False)
     image = db.Column(db.String(128), nullable=True)
@@ -79,7 +78,7 @@ class TransformRequest(db.Model):
 
     def save_to_db(self):
         db.session.add(self)
-        db.session.flush()
+        db.session.commit()
 
     @classmethod
     def return_all(cls):
@@ -87,17 +86,12 @@ class TransformRequest(db.Model):
                                      TransformRequest.query.all()))}
 
     @classmethod
-    def get_request_cached(cls, request_id):
-        if request_id in TransformRequest._cache:
-            return TransformRequest._cache[request_id]
-
-        live_val = TransformRequest.return_request(request_id)
-        TransformRequest._cache[request_id] = live_val.id
-        return live_val.id
-
-    @classmethod
     def return_request(cls, request_id):
         return cls.query.filter_by(request_id=request_id).one()
+
+    @classmethod
+    def update_request(cls, request_obj):
+        db.session.commit()
 
     @classmethod
     def files_remaining(cls, request_id):
@@ -146,7 +140,7 @@ class TransformationResult(db.Model):
 
     def save_to_db(self):
         db.session.add(self)
-        db.session.flush()
+        db.session.commit()
 
     @classmethod
     def count(cls, request_id):
@@ -209,7 +203,7 @@ class DatasetFile(db.Model):
 
     def save_to_db(self):
         db.session.add(self)
-        db.session.flush()
+        db.session.commit()
 
     @classmethod
     def get_by_id(cls, dataset_file_id):
@@ -218,22 +212,46 @@ class DatasetFile(db.Model):
     def get_path_id(self):
         return self.request_id+":"+str(self.id)
 
+#from servicex.__init__ import db
+from passlib.hash import pbkdf2_sha256 as sha256
 
-class FileStatus(db.Model):
-    __tablename__ = 'file_status'
+class UserModel(db.Model):
+    __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key=True)
-    file_id = db.Column(db.Integer, nullable=False)
-    request_id = db.Column(db.String(48),
-                           ForeignKey('requests.request_id'),
-                           unique=False,
-                           nullable=False)
-    status = db.Column(db.String(128), nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False)
-    pod_name = db.Column(db.String(128), nullable=True)
-
-    info = db.Column(db.String(4096), nullable=True)
+    id = db.Column(db.Integer, primary_key = True)
+    username = db.Column(db.String(120), unique = True, nullable = False)
+    password = db.Column(db.String(120), nullable = False)
 
     def save_to_db(self):
         db.session.add(self)
-        db.session.flush()
+        db.session.commit()
+
+    @classmethod
+    def find_by_username(cls, username):
+        return cls.query.filter_by(username = username).first()
+
+    @classmethod
+    def return_all(cls):
+        def to_json(x):
+            return {
+                'username': x.username,
+                'password': x.password
+            }
+        return {'users': list(map(lambda x: to_json(x), UserModel.query.all()))}
+
+    @classmethod
+    def delete_all(cls):
+        try:
+            num_rows_deleted = db.session.query(cls).delete()
+            db.session.commit()
+            return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
+        except:
+            return {'message': 'Something went wrong'}
+
+    @staticmethod
+    def generate_hash(password):
+        return sha256.hash(password)
+
+    @staticmethod
+    def verify_hash(password, hash):
+        return sha256.verify(password, hash)

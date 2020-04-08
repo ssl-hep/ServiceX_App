@@ -30,7 +30,6 @@ from servicex.resources.servicex_resource import ServiceXResource
 
 
 class QueryTransformationRequest(ServiceXResource):
-
     def get(self, request_id=None):
         if request_id:
             return TransformRequest.to_json(
