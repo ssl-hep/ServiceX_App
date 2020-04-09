@@ -243,7 +243,7 @@ class UserModel(db.Model):
             num_rows_deleted = db.session.query(cls).delete()
             db.session.commit()
             return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
-        except:
+        except Exception as e:
             return {'message': 'Something went wrong'}
 
     @staticmethod
