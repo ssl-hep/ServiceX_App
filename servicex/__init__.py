@@ -39,7 +39,6 @@ from servicex.transformer_manager import TransformerManager
 from servicex.object_store_manager import ObjectStoreManager
 
 from flask_sqlalchemy import SQLAlchemy
-from flask_jwt_extended import JWTManager
 import servicex.resource
 import servicex.models
 
@@ -79,7 +78,6 @@ def create_app(test_config=None,
         db.create_all()
 
     app.config['JWT_SECRET_KEY'] = 'jwt-secret-string'
-    #jwt = JWTManager(app)
 
     api.add_resource(servicex.resource.UserRegistration, '/registration')
     api.add_resource(servicex.resource.UserLogin, '/login')
