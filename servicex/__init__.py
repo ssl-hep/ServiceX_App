@@ -41,8 +41,8 @@ from servicex.object_store_manager import ObjectStoreManager
 from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
-import servicex.resource, servicex.models
-
+import servicex.resource
+import servicex.models
 
 
 def _init_rabbit_mq(rabbitmq_url):
@@ -94,7 +94,8 @@ def create_app(test_config=None,
         app.config.from_envvar('APP_CONFIG_FILE')
     else:
         app.config.from_mapping(test_config)
-        print("Transformer enabled: ", test_config['TRANSFORMER_MANAGER_ENABLED'])
+        print("Transformer enabled: ",
+              test_config['TRANSFORMER_MANAGER_ENABLED'])
 
     with app.app_context():
 
@@ -109,7 +110,8 @@ def create_app(test_config=None,
             object_store = None
 
         if app.config['TRANSFORMER_MANAGER_ENABLED'] and not provided_transformer_manager:
-            transformer_manager = TransformerManager(app.config['TRANSFORMER_MANAGER_MODE'])
+            transformer_manager = TransformerManager(
+                app.config['TRANSFORMER_MANAGER_MODE'])
         else:
             transformer_manager = provided_transformer_manager
 

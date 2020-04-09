@@ -50,20 +50,26 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                      '/servicex/transformation/<string:request_id>',
                      '/servicex/transformation')
 
-    api.add_resource(TransformationStatus, '/servicex/transformation/<string:request_id>/status')
+    api.add_resource(TransformationStatus,
+                     '/servicex/transformation/<string:request_id>/status')
 
     AddFileToDataset.make_api(lookup_result_processor, elasticsearch_adapter)
-    api.add_resource(AddFileToDataset, '/servicex/transformation/<string:request_id>/files')
+    api.add_resource(AddFileToDataset,
+                     '/servicex/transformation/<string:request_id>/files')
 
     PreflightCheck.make_api(lookup_result_processor)
-    api.add_resource(PreflightCheck, '/servicex/transformation/<string:request_id>/preflight')
+    api.add_resource(
+        PreflightCheck, '/servicex/transformation/<string:request_id>/preflight')
 
     FilesetComplete.make_api(lookup_result_processor)
-    api.add_resource(FilesetComplete, '/servicex/transformation/<string:request_id>/complete')
+    api.add_resource(
+        FilesetComplete, '/servicex/transformation/<string:request_id>/complete')
 
     TransformStart.make_api(transformer_manager)
-    api.add_resource(TransformStart, '/servicex/transformation/<string:request_id>/start')
+    api.add_resource(
+        TransformStart, '/servicex/transformation/<string:request_id>/start')
 
-    TransformerFileComplete.make_api(transformer_manager, elasticsearch_adapter)
+    TransformerFileComplete.make_api(
+        transformer_manager, elasticsearch_adapter)
     api.add_resource(TransformerFileComplete,
                      '/servicex/transformation/<string:request_id>/file-complete')
