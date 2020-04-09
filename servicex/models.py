@@ -216,7 +216,7 @@ class DatasetFile(db.Model):
 class UserModel(db.Model):
     __tablename__ = 'users'
 
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(120), nullable=False)
 
@@ -244,7 +244,8 @@ class UserModel(db.Model):
             db.session.commit()
             return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
         except Exception as e:
-            return {'message': 'Something went wrong'}
+            e.args += (d,)
+            raise
 
     @staticmethod
     def generate_hash(password):
