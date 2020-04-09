@@ -38,7 +38,6 @@ from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 from servicex.object_store_manager import ObjectStoreManager
 
-from flask_restful import Api
 from flask_sqlalchemy import SQLAlchemy
 from flask_jwt_extended import JWTManager
 import servicex.resource
@@ -80,7 +79,7 @@ def create_app(test_config=None,
         db.create_all()
 
     app.config['JWT_SECRET_KEY'] = 'jwt-secret-string'
-    jwt = JWTManager(app)
+    #jwt = JWTManager(app)
 
     api.add_resource(servicex.resource.UserRegistration, '/registration')
     api.add_resource(servicex.resource.UserLogin, '/login')
@@ -158,7 +157,7 @@ def create_app(test_config=None,
             pass
 
         @app.before_first_request
-        def create_tables():
+        def create_tables_new():
             from servicex.models import db
             db.init_app(app)
             db.create_all()
