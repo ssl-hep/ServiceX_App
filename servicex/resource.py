@@ -32,8 +32,7 @@ class UserRegistration(Resource):
                 'refresh_token': refresh_token
             }
         except Exception as e:
-            e.args += (d,)
-            raise
+            return e
 
 
 class UserLogin(Resource):
