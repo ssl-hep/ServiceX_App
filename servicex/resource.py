@@ -1,7 +1,8 @@
 from flask_restful import Resource, reqparse
 from servicex.models import UserModel
 from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required,
-                                verify_jwt_in_request, jwt_refresh_token_required, get_jwt_identity)
+                                jwt_refresh_token_required, 
+                                get_jwt_identity)
 
 parser = reqparse.RequestParser()
 parser.add_argument(
@@ -31,7 +32,7 @@ class UserRegistration(Resource):
                 'access_token': access_token,
                 'refresh_token': refresh_token
             }
-        except:
+        except Exception as e:
             return {'message': 'Something went wrong'}, 500
 
 
