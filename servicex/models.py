@@ -244,8 +244,7 @@ class UserModel(db.Model):
             db.session.commit()
             return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
         except Exception as e:
-            e.args += (d,)
-            raise
+            return e
 
     @staticmethod
     def generate_hash(password):
