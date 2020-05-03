@@ -134,7 +134,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
 
-        service_endpoint = "http://cern.analysis.ch:5000/servicex/transformation/" + request_id
+        service_endpoint = "http://cern.analysis.ch:5000/servicex/transformation-dev/" + request_id
         mock_rabbit_adaptor. \
             basic_publish.assert_called_with(exchange='',
                                              routing_key='did_requests',
@@ -185,7 +185,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         assert mock_rabbit_adaptor.bind_queue_to_exchange.call_args_list == bind_to_exchange_calls
 
-        service_endpoint = "http://cern.analysis.ch:5000/servicex/transformation/" + request_id
+        service_endpoint = "http://cern.analysis.ch:5000/servicex/transformation-dev/" + request_id
         mock_rabbit_adaptor. \
             basic_publish.assert_called_with(exchange='',
                                              routing_key='did_requests',

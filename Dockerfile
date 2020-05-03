@@ -10,7 +10,8 @@ COPY setup.cfg setup.cfg
 COPY README.rst README.rst
 RUN pip install -e .
 RUN pip install gunicorn
-
+RUN pip install flask_jwt_extended
+RUN pip install flask_restful
 
 COPY *.py docker-dev.conf boot.sh ./
 COPY servicex/ ./servicex

@@ -30,7 +30,7 @@
 def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                object_store, elasticsearch_adapter, code_gen_service,
                lookup_result_processor):
-    from servicex.resources.submit_transformation_request import SubmitTransformationRequest
+    from servicex.resources.submit_transformation_request import SubmitTransformationRequest, SubmitTransformationRequest_dev
     from servicex.resources.transform_start import TransformStart
     from servicex.resources.transform_status import TransformationStatus
     from servicex.resources.query_transformation_request import QueryTransformationRequest
@@ -45,6 +45,9 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                                          code_gen_service=code_gen_service,
                                          lookup_result_processor=lookup_result_processor)
     api.add_resource(SubmitTransformationRequest, '/servicex/transformation')
+
+    api.add_resource(SubmitTransformationRequest_dev,
+                     '/servicex/transformation-dev')
 
     api.add_resource(QueryTransformationRequest,
                      '/servicex/transformation/<string:request_id>',
