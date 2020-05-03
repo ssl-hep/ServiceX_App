@@ -29,7 +29,6 @@
 import os
 from flask import Flask
 from flask_restful import Api
-
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.elasticsearch_adaptor import ElasticSearchAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
@@ -37,7 +36,6 @@ from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 from servicex.object_store_manager import ObjectStoreManager
-
 from flask_sqlalchemy import SQLAlchemy
 import servicex.resource
 import servicex.models
