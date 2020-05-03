@@ -30,7 +30,8 @@
 def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                object_store, elasticsearch_adapter, code_gen_service,
                lookup_result_processor):
-    from servicex.resources.submit_transformation_request import SubmitTransformationRequest, SubmitTransformationRequest_dev
+    from servicex.resources.submit_transformation_request import
+        SubmitTransformationRequest, SubmitTransformationRequest_dev
     from servicex.resources.transform_start import TransformStart
     from servicex.resources.transform_status import TransformationStatus
     from servicex.resources.query_transformation_request import QueryTransformationRequest
