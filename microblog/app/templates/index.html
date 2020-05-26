@@ -1,0 +1,113 @@
+<html>
+    <head>
+	{% if title %}
+        <title>{{ title }} - Microblog</title>
+	{% else %}
+	<title> Welcome to Microblog! </title>
+	{% endif %}
+    </head>
+	<body>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script src="http://malsup.github.com/jquery.form.js"></script>
+		<script type=text/javascript>
+			$(function() {
+				$('a#test').bind('click', function() {
+				$.getJSON('/on_press',
+					function(data) {
+				})
+				return false;
+			});
+		});
+		</script>
+                <script type=text/javascript>
+                        $(function() {
+                                $('a#test2').bind('click', function() {
+                                $.getJSON('/status',
+                                        function(data) {
+                                })
+                                return false;
+                        });
+                });
+                </script>
+              </script>
+
+                          <script type=text/javascript>
+                                  $(function() {
+                                          $('a#form').submit(function() {
+                                          $.getJSON('/acceptu',
+                                                  function(data) {
+                                          })
+                                          return false;
+                                  });
+                          });
+                          </script>
+
+                          <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+
+
+    <script type=text/javascript>
+                          //callback handler for form submit
+                          $(function() {
+                          $("#form1").on("submit", function (event) {
+                            var $this = $(this);
+                            var frmValues = $this.serialize();
+                            console.log(frmValues);
+                            console.log(frmValues.split("token=")[1]);
+                            $.ajax({
+                                type: "POST",
+                                url: "http://localhost:5000/accept",
+                                headers:{"Authorization": "Bearer "+ frmValues.split("token=")[1]},
+                                data: frmValues
+                              })
+                            .done(function () {
+                              $("#para").text("Serialized! Input String is " + frmValues);
+                            })
+                            .fail(function () {
+                                $("#para").text("An error occured");
+                            });
+                            event.preventDefault();
+                            $this.reset();
+                            //window.location.reload()
+                        });
+                      });
+    </script>
+
+		<div class='container'>
+    			<h3>Test</h3>
+            <form action="http://localhost:5000/registration" method = "POST">
+              <h3> register </h3>
+              <label for="username">Username:</label><br>
+              <input type="text" id="username" name="username"><br>
+              <label for="password">Password:</label><br>
+              <input type="password" id="password" name="password">
+              <input type="submit" value="Submit">
+            </form>
+
+            <form action="http://localhost:5000/login" method = "POST">
+              <h3> login </h3>
+              <label for="username">Username:</label><br>
+              <input type="text" id="username" name="username"><br>
+              <label for="password">Password:</label><br>
+              <input type="password" id="password" name="password">
+              <input type="submit" value="Submit">
+            </form>
+
+            <button onclick="window.location.href='http://localhost:5000/pending';">
+              Pending
+            </button>
+
+            <button onclick="window.location.href='http://localhost:5000/users';">
+              Approved Users
+            </button>
+
+            <form method="post" action="http://localhost:5000/accept" id="form1">
+              <h3> Accept pending users </h3>
+              <label for="username">Username:</label><br>
+              <input type="text" id="username" name="username"><br>
+              <label for="token">Access Token:</label><br>
+              <input id="token" type="text" name="token"><br>
+              <input type="submit" value="Submit">
+            </form>
+		</div>
+    </body>
+</html>
