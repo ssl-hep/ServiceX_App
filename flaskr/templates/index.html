@@ -1,0 +1,43 @@
+<html>
+    <head>
+	{% if title %}
+        <title>{{ title }} - Microblog</title>
+	{% else %}
+	<title> Welcome to Microblog! </title>
+	{% endif %}
+    </head>
+	<body>
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+		<script type=text/javascript>
+			$(function() {
+				$('a#test').bind('click', function() {
+				$.getJSON('/on_press',
+					function(data) {
+				})
+				return false;
+			});
+		});
+		</script>
+                <script type=text/javascript>
+                        $(function() {
+                                $('a#test2').bind('click', function() {
+                                $.getJSON('/status',
+                                        function(data) {
+                                })
+                                return false;
+                        });
+                });
+                </script>
+		<div class='container'>
+    			<h3>Test</h3>
+        		<form method="post" id="form">
+            			<a href=# id=test><button class='btn btn-default'>Submit Request</button></a>
+        		</form>
+
+			<form method="post" id="form">
+                                <a href=# id=test2><button class='btn btn-default'>View Status</button></a>
+                        </form>
+
+		</div>
+    </body>
+</html>

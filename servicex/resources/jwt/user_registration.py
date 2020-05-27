@@ -44,42 +44,21 @@ class UserRegistration(Resource):
 
         if PendingUserModel.find_by_username(data['username']):
             return {'message': 'User {} already exists'.format(data['username'])}
-
-        if (json.dumps(UserModel.return_all()) == "{\"users\": []}"):
-            new_user = UserModel(
-            username=data['username'],
-            key=UserModel.generate_hash(data['password']),
-            admin=1
-            )
-            try:
-                new_user.save_to_db()
-                access_token = create_access_token(identity=data['username'])
-                refresh_token = create_refresh_token(identity=data['username'])
-                return {
-                    'message': 'User {} was created'.format(data['username']),
-                    'access_token': access_token,
-                    'refresh_token': refresh_token
-                    }
-            except Exception:
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
-                print(exc_value)
-                return {'message': str(exc_value)}, 500
-        else:
-            new_user = PendingUserModel(
+        
+        new_user = PendingUserModel(
             username=data['username'],
             key=PendingUserModel.generate_hash(data['password'])
-            )
+        )
 
-            try:
-                new_user.save_to_db()
-                #access_token = create_access_token(identity=data['username'])
-                #refresh_token = create_refresh_token(identity=data['username'])
-                return {
-                    'message': 'User {} was created'.format(data['username']),
+        try:
+            new_user.save_to_db()
+            #access_token = create_access_token(identity=data['username'])
+            #refresh_token = create_refresh_token(identity=data['username'])
+            return {
+                'message': 'User {} was created'.format(data['username']),
                     }
-            except Exception:
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
-                print(exc_value)
-                return {'message': str(exc_value)}, 500
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
+            print(exc_value)
+            return {'message': str(exc_value)}, 500

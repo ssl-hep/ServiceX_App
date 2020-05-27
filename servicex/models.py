@@ -28,6 +28,7 @@
 import hashlib
 from sqlalchemy import func, ForeignKey
 from flask_sqlalchemy import SQLAlchemy
+from flask import request, render_template
 
 db = SQLAlchemy()
 
@@ -53,6 +54,7 @@ class PendingUserModel(db.Model):
             'username': x.username,
             'key': x.key
             }
+        users = PendingUserModel.query.all()
         return {'pending': list(map(lambda x: to_json(x), PendingUserModel.query.all()))}
 
     @classmethod
