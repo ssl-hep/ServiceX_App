@@ -8,6 +8,10 @@ from minio import Minio
 import tempfile
 import pyarrow.parquet as pq
 import json
+import sys
+import os
+sys.path.append(os.path.realpath('..'))
+from servicex.models import UserModel
 
 @app.route('/')
 @app.route('/index', methods=['GET','POST'])
@@ -52,3 +56,8 @@ def acceptu():
 	print(response.json())
 	return str(acceptu_endpoint)
 	#str(response)
+@app.route('/new', methods=['GET','POST'])
+def new():
+	return render_template('new.html',
+                           users=UserModel.query.all(),
+                           title="Show Users")
