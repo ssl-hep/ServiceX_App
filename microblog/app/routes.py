@@ -10,8 +10,8 @@ import pyarrow.parquet as pq
 import json
 import sys
 import os
-sys.path.append(os.path.realpath('..'))
-from servicex.models import UserModel
+#sys.path.append(os.path.realpath('..'))
+#from servicex.models import UserModel
 
 @app.route('/')
 @app.route('/index', methods=['GET','POST'])
@@ -53,11 +53,7 @@ def acceptu():
 	print(str(request.form.to_dict()))
 	print(str(request.form.items()))
 	response = requests.post(acceptu_endpoint, data = json.dumps({"username":request.form.items().key}),  headers={"Authorization" :request.form.items().key})
-	print(response.json())
+	print(response)
 	return str(acceptu_endpoint)
 	#str(response)
-@app.route('/new', methods=['GET','POST'])
-def new():
-	return render_template('new.html',
-                           users=UserModel.query.all(),
-                           title="Show Users")
+
