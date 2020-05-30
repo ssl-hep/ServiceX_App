@@ -2,8 +2,8 @@ import sys
 import traceback
 
 from flask_restful import Resource, reqparse
+from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity)
 from servicex.models import UserModel, PendingUserModel
-from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required,get_jwt_identity)
 
 parser = reqparse.RequestParser()
 parser.add_argument('username', help='This field cannot be blank', required=True)
@@ -16,7 +16,7 @@ class AcceptUser(Resource):
         user_id = get_jwt_identity()
         ad = UserModel.find_by_username(user_id).admin
         if ad == 0:
-            return jsonify({"message": "Forbidden"}), 403
+            return {"message": "Forbidden"}, 403
 
         data = parser.parse_args()
 

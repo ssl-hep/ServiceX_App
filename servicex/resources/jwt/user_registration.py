@@ -44,7 +44,7 @@ class UserRegistration(Resource):
 
         if PendingUserModel.find_by_username(data['username']):
             return {'message': 'User {} already exists'.format(data['username'])}
-        
+
         new_user = PendingUserModel(
             username=data['username'],
             key=PendingUserModel.generate_hash(data['password'])
@@ -55,7 +55,7 @@ class UserRegistration(Resource):
             #access_token = create_access_token(identity=data['username'])
             #refresh_token = create_refresh_token(identity=data['username'])
             return {
-                'message': 'User {} was created'.format(data['username']),
+                'message': 'User {} added to pending user list'.format(data['username']),
                     }
         except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
