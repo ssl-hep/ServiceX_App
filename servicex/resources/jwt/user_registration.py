@@ -27,10 +27,9 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import sys
 import traceback
-import json
 
 from flask_restful import Resource, reqparse
-from servicex.models import PendingUserModel, UserModel
+from servicex.models import PendingUserModel
 
 parser = reqparse.RequestParser()
 parser.add_argument('username', help='This field cannot be blank', required=True)

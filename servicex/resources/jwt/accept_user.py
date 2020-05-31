@@ -2,13 +2,12 @@ import sys
 import traceback
 
 from flask_restful import Resource, reqparse
-from flask_jwt_extended import (create_access_token, create_refresh_token, jwt_required, get_jwt_identity)
+from flask_jwt_extended import (create_access_token, create_refresh_token)
+from flask_jwt_extended import (jwt_required, get_jwt_identity)
 from servicex.models import UserModel, PendingUserModel
 
 parser = reqparse.RequestParser()
 parser.add_argument('username', help='This field cannot be blank', required=True)
-#parser.add_argument('password', help='This field cannot be blank', required=True)
-
 
 class AcceptUser(Resource):
     @jwt_required
@@ -31,7 +30,6 @@ class AcceptUser(Resource):
 
         try:
             new_user.save_to_db()
-            #PendingUserModel.delete_one(data['username'])
             PendingUserModel.delete_one(data['username'])
             access_token = create_access_token(identity=data['username'])
             refresh_token = create_refresh_token(identity=data['username'])

@@ -155,9 +155,8 @@ def create_app(test_config=None,
 
         @app.before_first_request
         def create_tables():
-            from servicex.models import db,UserModel
-            from flask_jwt_extended import (JWTManager,create_access_token)
-            from flask_jwt_extended import (create_refresh_token, get_jwt_claims)
+            from servicex.models import db, UserModel
+            from flask_jwt_extended import (create_refresh_token, create_access_token)
             db.init_app(app)
             db.create_all()
             app.config.from_envvar('APP_CONFIG_FILE')
