@@ -53,7 +53,6 @@ class PendingUserModel(db.Model):
                 'username': x.username,
                 'key': x.key
             }
-        users = PendingUserModel.query.all()
         return {'pending': list(map(lambda x: to_json(x),
                 PendingUserModel.query.all()))}
 
@@ -69,7 +68,7 @@ class PendingUserModel(db.Model):
     @classmethod
     def delete_one(cls, username):
         try:
-            user = db.session.query(cls).filter_by(username=username).delete()
+            db.session.query(cls).filter_by(username=username).delete()
             db.session.commit()
             return {'message': 'row deleted'}
         except Exception:
@@ -86,6 +85,7 @@ class PendingUserModel(db.Model):
     @staticmethod
     def get_password(cls, username):
         return cls.query.filter_by(username=username).first().key
+
 
 class UserModel(db.Model):
     __tablename__ = 'users'

@@ -1,27 +1,17 @@
-from flask import render_template, flash, redirect,request
-from wtforms import Form, TextField, TextAreaField, validators, StringField, SubmitField
+from flask import render_template, request
 from app import app
 #from app.forms import LoginForm
 # for python code on button press
 import requests
-from minio import Minio
-import tempfile
-import pyarrow.parquet as pq
 import json
-import sys
-import os
-#sys.path.append(os.path.realpath('..'))
-#from servicex.models import UserModel
 
 @app.route('/')
 @app.route('/index', methods=['GET','POST'])
 
 def index():
-	#form = LoginForm()
-	return render_template('index.html', title='Home')
+    return render_template('index.html', title='Home')
 
 @app.route('/on_press',methods=['GET','POST'])
-
 def on_press():
 	servicex_endpoint = "http://localhost:5000/servicex"
 	response = requests.post(servicex_endpoint+"/transformation", json={
@@ -55,5 +45,3 @@ def acceptu():
 	response = requests.post(acceptu_endpoint, data = json.dumps({"username":request.form.items().key}),  headers={"Authorization" :request.form.items().key})
 	print(response)
 	return str(acceptu_endpoint)
-	#str(response)
-

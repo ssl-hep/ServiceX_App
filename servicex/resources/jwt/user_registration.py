@@ -31,7 +31,6 @@ import json
 
 from flask_restful import Resource, reqparse
 from servicex.models import PendingUserModel, UserModel
-from flask_jwt_extended import (create_access_token, create_refresh_token, get_jwt_claims)
 
 parser = reqparse.RequestParser()
 parser.add_argument('username', help='This field cannot be blank', required=True)
@@ -52,8 +51,6 @@ class UserRegistration(Resource):
 
         try:
             new_user.save_to_db()
-            #access_token = create_access_token(identity=data['username'])
-            #refresh_token = create_refresh_token(identity=data['username'])
             return {
                 'message': 'User {} added to pending user list'.format(data['username']),
                     }
