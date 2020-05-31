@@ -9,6 +9,7 @@ from servicex.models import UserModel, PendingUserModel
 parser = reqparse.RequestParser()
 parser.add_argument('username', help='This field cannot be blank', required=True)
 
+
 class AcceptUser(Resource):
     @jwt_required
     def post(self):
