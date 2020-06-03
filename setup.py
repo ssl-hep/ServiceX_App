@@ -57,7 +57,7 @@ setup(
         'kubernetes',
         'minio',
         'elasticsearch',
-        'psycopg2'
+        'psycopg2-binary'
     ],
     extras_require={
         'test': [

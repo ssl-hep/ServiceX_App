@@ -157,7 +157,6 @@ def create_app(test_config=None,
         def create_tables():
             from servicex.models import db, UserModel
             from flask_jwt_extended import (create_refresh_token, create_access_token)
-            app.config.from_envvar('APP_CONFIG_FILE')
             db.init_app(app)
             db.create_all()
             if not UserModel.find_by_username(app.config['JWT_ADMIN']):
