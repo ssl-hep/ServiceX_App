@@ -28,6 +28,7 @@
 import hashlib
 from sqlalchemy import func, ForeignKey
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm.exc import NoResultFound
 
 db = SQLAlchemy()
 
@@ -89,6 +90,14 @@ class UserModel(db.Model):
             return {'message': '{} row(s) deleted'.format(num_rows_deleted)}
         except Exception:
             return {'message': 'Something went wrong'}
+
+    @classmethod
+    def accept(cls, username):
+        pending_user = UserModel.find_by_username(username)
+        if not pending_user:
+            raise NoResultFound(f"No user registered with username: {username}")
+        pending_user.pending = False
+        pending_user.save_to_db()
 
     @staticmethod
     def generate_hash(password):
