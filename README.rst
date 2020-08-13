@@ -49,7 +49,7 @@ They can approve the request with a POST to ``/accept`` with a body of:
 
     {
         "email": "<the email>"
-    }
+    }flak
 
 The API can also be configured to send notifications of new user registrations
 to a Slack channel of choice and allow administrators to approve pending users
