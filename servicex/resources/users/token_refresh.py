@@ -26,13 +26,14 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-from flask_restful import Resource
 from flask_jwt_extended import (create_access_token, get_raw_jwt, decode_token,
                                 jwt_refresh_token_required, get_jwt_identity)
+
+from servicex.resources.servicex_resource import ServiceXResource
 from servicex.models import UserModel
 
 
-class TokenRefresh(Resource):
+class TokenRefresh(ServiceXResource):
     @jwt_refresh_token_required
     def post(self):
         user = UserModel.find_by_sub(get_jwt_identity())

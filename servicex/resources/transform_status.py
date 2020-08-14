@@ -26,7 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask_jwt_extended import jwt_optional
-from flask_restful import reqparse
+from flask_restx import reqparse
 from flask import jsonify
 from servicex.models import TransformationResult, TransformRequest, db
 from servicex.resources.servicex_resource import ServiceXResource

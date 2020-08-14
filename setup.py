@@ -50,7 +50,7 @@ setup(
         'wtforms',
         'email-validator',
         'pika',
-        'flask-restful',
+        'flask-restx',
         'flask-jwt-extended',
         'passlib',
         'flask-sqlalchemy',

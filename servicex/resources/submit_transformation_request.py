@@ -34,7 +34,7 @@ import uuid
 
 from flask import current_app
 from flask_jwt_extended import jwt_optional
-from flask_restful import reqparse
+from flask_restx import reqparse
 
 from servicex.models import TransformRequest, DatasetFile, db
 from servicex.resources.servicex_resource import ServiceXResource

@@ -2,7 +2,7 @@ import traceback
 
 import sys
 from flask_jwt_extended import (jwt_optional)
-from flask_restful import reqparse
+from flask_restx import reqparse
 from sqlalchemy.orm.exc import NoResultFound
 
 from servicex.models import UserModel

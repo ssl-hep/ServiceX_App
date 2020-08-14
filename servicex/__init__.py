@@ -33,7 +33,7 @@ import pika
 from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_jwt_extended import (JWTManager)
-from flask_restful import Api
+from flask_restx import Api
 
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
@@ -43,6 +43,8 @@ from servicex.object_store_manager import ObjectStoreManager
 from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
+from servicex.object_store_manager import ObjectStoreManager
+
 
 
 def _init_rabbit_mq(rabbitmq_url, retries, retry_interval):

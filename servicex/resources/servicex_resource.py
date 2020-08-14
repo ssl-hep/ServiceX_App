@@ -31,10 +31,9 @@ import hashlib
 import hmac
 
 from flask_jwt_extended import get_jwt_identity
-from flask_restful import Resource
+from flask_restx import Resource
 from flask import current_app
-from datetime import datetime
-from datetime import timezone
+from datetime import datetime, timezone
 
 from servicex.models import TransformationResult, UserModel
 
