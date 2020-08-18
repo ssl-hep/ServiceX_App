@@ -43,8 +43,6 @@ from servicex.object_store_manager import ObjectStoreManager
 from servicex.rabbit_adaptor import RabbitAdaptor
 from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
-from servicex.object_store_manager import ObjectStoreManager
-
 
 
 def _init_rabbit_mq(rabbitmq_url, retries, retry_interval):
