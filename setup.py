@@ -62,7 +62,8 @@ setup(
         'psycopg2',
         'globus_sdk',
         'cryptography',
-        'bootstrap-flask'
+        'bootstrap-flask',
+        'prometheus-flask-exporter'
     ],
     extras_require={
         'test': [

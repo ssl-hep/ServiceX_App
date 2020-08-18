@@ -34,6 +34,7 @@ from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_jwt_extended import (JWTManager)
 from flask_restful import Api
+from prometheus_flask_exporter import RESTfulPrometheusMetrics
 
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
@@ -84,8 +85,8 @@ def create_app(test_config=None,
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
     Bootstrap(app)
-
     JWTManager(app)
+
     if not test_config:
         app.config.from_envvar('APP_CONFIG_FILE')
     else:
@@ -151,6 +152,7 @@ def create_app(test_config=None,
             docker_repo_adapter = provided_docker_repo_adapter
 
         api = Api(app)
+        metrics = RESTfulPrometheusMetrics(app, api)
 
         # ensure the instance folder exists
         try:
@@ -166,6 +168,6 @@ def create_app(test_config=None,
 
         add_routes(api, transformer_manager, rabbit_adaptor, object_store,
                    elasticsearch_adaptor, code_gen_service, lookup_result_processor,
-                   docker_repo_adapter)
+                   docker_repo_adapter, metrics)
 
     return app
