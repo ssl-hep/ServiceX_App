@@ -25,38 +25,39 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import sys
-import traceback
-
-from flask import request
-
-from servicex.models import TransformRequest
-from servicex.resources.servicex_resource import ServiceXResource
+from servicex import LookupResultProcessor
+from tests.resource_test_base import ResourceTestBase
 
 
-class PreflightCheck(ServiceXResource):
-    @classmethod
-    def make_api(cls, lookup_result_processor):
-        cls.lookup_result_processor = lookup_result_processor
-        return cls
+class TestFilesetComplete(ResourceTestBase):
+    def test_put_fileset_complete(self, mocker,  mock_rabbit_adaptor):
+        import servicex
+        submitted_request = self._generate_transform_request()
+        mock_transform_request_read = mocker.patch.object(
+            servicex.models.TransformRequest,
+            'return_request',
+            return_value=submitted_request)
 
-    def post(self, request_id):
-        body = request.get_json()
-        submitted_request = TransformRequest.return_request(request_id)
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
 
-        try:
-            self.lookup_result_processor.publish_preflight_request(
-                submitted_request,
-                body['file_path']
-            )
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
+                                   lookup_result_processor=mock_processor)
 
-            return {
-                "request-id": str(request_id),
-                "file-id": 42
-            }
-
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
-            print(exc_value)
-            return {'message': 'Something went wrong'}, 500
+        response = client.put('/api/v1/servicex/internal/transformation/1234/complete',
+                              json={
+                                  'files': 17,
+                                  'files-skipped': 2,
+                                  'total-events': 1024,
+                                  'total-bytes': 2046,
+                                  'elapsed-time': 42
+                              })
+        assert response.status_code == 200
+        mock_transform_request_read.assert_called_with('1234')
+        mock_processor.report_fileset_complete.assert_called_with(
+            submitted_request,
+            num_files=17,
+            num_skipped=2,
+            total_events=1024,
+            total_bytes=2046,
+            did_lookup_time=42
+        )

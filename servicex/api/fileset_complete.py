@@ -25,51 +25,27 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import sys
-import traceback
-
 from flask import request
 
-from servicex.models import TransformRequest, DatasetFile
-from servicex.resources.servicex_resource import ServiceXResource
+from servicex.models import TransformRequest, db
+from servicex.api.servicex_resource import ServiceXResource
 
 
-class AddFileToDataset(ServiceXResource):
+class FilesetComplete(ServiceXResource):
     @classmethod
-    def make_api(cls, lookup_result_processor, elasticsearch_adaptor):
+    def make_api(cls, lookup_result_processor):
         cls.lookup_result_processor = lookup_result_processor
-        cls.elasticsearch_adaptor = elasticsearch_adaptor
         return cls
 
     def put(self, request_id):
-        try:
-            from servicex.models import db
-            add_file_request = request.get_json()
-            submitted_request = TransformRequest.return_request(request_id)
-
-            db_record = DatasetFile(request_id=request_id,
-                                    file_path=add_file_request['file_path'],
-                                    adler32=add_file_request['adler32'],
-                                    file_events=add_file_request['file_events'],
-                                    file_size=add_file_request['file_size'])
-
-            self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
-
-            if self.elasticsearch_adaptor:
-                self.elasticsearch_adaptor.create_update_path(
-                    db_record.get_path_id(),
-                    self._generate_file_status_record(
-                        db_record, "located")
-                )
-            db.session.commit()
-
-            return {
-                "request-id": str(request_id),
-                "file-id": db_record.id
-            }
-
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
-            print(exc_value)
-            return {'message': 'Something went wrong: ' + str(exc_value)}, 500
+        summary = request.get_json()
+        rec = TransformRequest.return_request(request_id)
+        self.lookup_result_processor.report_fileset_complete(
+            rec,
+            num_files=summary['files'],
+            num_skipped=summary['files-skipped'],
+            total_events=summary['total-events'],
+            total_bytes=summary['total-bytes'],
+            did_lookup_time=summary['elapsed-time']
+        )
+        db.session.commit()

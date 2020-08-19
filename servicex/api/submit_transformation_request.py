@@ -37,7 +37,7 @@ from flask_jwt_extended import jwt_optional
 from flask_restx import reqparse
 
 from servicex.models import TransformRequest, DatasetFile, db
-from servicex.resources.servicex_resource import ServiceXResource
+from servicex.api.servicex_resource import ServiceXResource
 from werkzeug.exceptions import BadRequest
 
 parser = reqparse.RequestParser()

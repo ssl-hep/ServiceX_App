@@ -25,27 +25,38 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import sys
+import traceback
+
 from flask import request
 
-from servicex.models import TransformRequest, db
-from servicex.resources.servicex_resource import ServiceXResource
+from servicex.models import TransformRequest
+from servicex.api.servicex_resource import ServiceXResource
 
 
-class FilesetComplete(ServiceXResource):
+class PreflightCheck(ServiceXResource):
     @classmethod
     def make_api(cls, lookup_result_processor):
         cls.lookup_result_processor = lookup_result_processor
         return cls
 
-    def put(self, request_id):
-        summary = request.get_json()
-        rec = TransformRequest.return_request(request_id)
-        self.lookup_result_processor.report_fileset_complete(
-            rec,
-            num_files=summary['files'],
-            num_skipped=summary['files-skipped'],
-            total_events=summary['total-events'],
-            total_bytes=summary['total-bytes'],
-            did_lookup_time=summary['elapsed-time']
-        )
-        db.session.commit()
+    def post(self, request_id):
+        body = request.get_json()
+        submitted_request = TransformRequest.return_request(request_id)
+
+        try:
+            self.lookup_result_processor.publish_preflight_request(
+                submitted_request,
+                body['file_path']
+            )
+
+            return {
+                "request-id": str(request_id),
+                "file-id": 42
+            }
+
+        except Exception:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
+            print(exc_value)
+            return {'message': 'Something went wrong'}, 500

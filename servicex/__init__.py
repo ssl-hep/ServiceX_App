@@ -33,7 +33,6 @@ import pika
 from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_jwt_extended import (JWTManager)
-from flask_restx import Api
 
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
@@ -41,7 +40,6 @@ from servicex.elasticsearch_adaptor import ElasticSearchAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
 from servicex.object_store_manager import ObjectStoreManager
 from servicex.rabbit_adaptor import RabbitAdaptor
-from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 
 
@@ -150,7 +148,14 @@ def create_app(test_config=None,
         else:
             docker_repo_adapter = provided_docker_repo_adapter
 
-        api = Api(app)
+        from servicex.api import api_blueprint, add_api_routes
+        add_api_routes(transformer_manager, rabbit_adaptor, object_store,
+                       elasticsearch_adaptor, code_gen_service,
+                       lookup_result_processor, docker_repo_adapter)
+        app.register_blueprint(api_blueprint, url_prefix='/api/v1')
+
+        from servicex.web import add_web_routes
+        add_web_routes()
 
         # ensure the instance folder exists
         try:
@@ -163,9 +168,5 @@ def create_app(test_config=None,
             from servicex.models import db
             db.init_app(app)
             db.create_all()
-
-        add_routes(api, transformer_manager, rabbit_adaptor, object_store,
-                   elasticsearch_adaptor, code_gen_service, lookup_result_processor,
-                   docker_repo_adapter)
 
     return app

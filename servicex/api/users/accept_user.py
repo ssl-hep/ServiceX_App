@@ -6,7 +6,7 @@ from flask_restx import reqparse
 from sqlalchemy.orm.exc import NoResultFound
 
 from servicex.models import UserModel
-from servicex.resources.servicex_resource import ServiceXResource
+from servicex.api.servicex_resource import ServiceXResource
 
 parser = reqparse.RequestParser()
 parser.add_argument('email', help='This field cannot be blank', required=True)

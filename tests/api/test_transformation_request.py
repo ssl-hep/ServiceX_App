@@ -37,7 +37,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
     def test_submit_transformation_request_bad(self, mocker, mock_rabbit_adaptor):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
-        response = client.post('/servicex/transformation',
+        response = client.post('/api/v1/servicex/transformation',
                                json={'timestamp': '20190101'})
         assert response.status_code == 400
 
@@ -66,7 +66,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         request = self._generate_transformation_request()
         request['result-destination'] = 'foo'
-        response = client.post('/servicex/transformation', json=request)
+        response = client.post('/api/v1/servicex/transformation', json=request)
         assert response.status_code == 400
 
     def test_submit_transformation_bad_wrong_dest_for_format(self, mocker, mock_rabbit_adaptor):
@@ -74,14 +74,14 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request = self._generate_transformation_request()
         request['result-format'] = 'root-file'
         request['result-destination'] = 'minio'
-        response = client.post('/servicex/transformation', json=request)
+        response = client.post('/api/v1/servicex/transformation', json=request)
         assert response.status_code == 400
 
     def test_submit_transformation_bad_result_format(self, mocker, mock_rabbit_adaptor):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
         request = self._generate_transformation_request()
         request['result-format'] = 'foo'
-        response = client.post('/servicex/transformation', json=request)
+        response = client.post('/api/v1/servicex/transformation', json=request)
         assert response.status_code == 400
 
     def test_submit_transformation_bad_workflow(self, mock_rabbit_adaptor,
@@ -92,7 +92,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request['columns'] = None
         request['selection'] = None
 
-        r = client.post('/servicex/transformation', json=request)
+        r = client.post('/api/v1/servicex/transformation', json=request)
         assert r.status_code == 400
 
     def test_submit_transformation_request_throws_exception(self, mocker,
@@ -102,7 +102,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    docker_repo_adapter=mock_docker_repo_adapter)
 
-        response = client.post('/servicex/transformation',
+        response = client.post('/api/v1/servicex/transformation',
                                json=self._generate_transformation_request())
         assert response.status_code == 500
         assert response.json == {"message": "Something went wrong"}
@@ -110,7 +110,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     def test_submit_transformation(self, mock_rabbit_adaptor, mock_docker_repo_adapter):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    docker_repo_adapter=mock_docker_repo_adapter)
-        response = client.post('/servicex/transformation',
+        response = client.post('/api/v1/servicex/transformation',
                                json=self._generate_transformation_request())
 
         assert response.status_code == 200
@@ -164,7 +164,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    code_gen_service=mock_code_gen_service,
                                    docker_repo_adapter=mock_docker_repo_adapter)
-        response = client.post('/servicex/transformation',
+        response = client.post('/api/v1/servicex/transformation',
                                json=request)
 
         assert response.status_code == 200
@@ -225,7 +225,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                    lookup_result_processor=mock_processor,
                                    docker_repo_adapter=mock_docker_repo_adapter)
 
-        response = client.post('/servicex/transformation',
+        response = client.post('/api/v1/servicex/transformation',
                                json=request)
 
         assert response.status_code == 200
@@ -252,7 +252,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    docker_repo_adapter=mock_docker_repo_adapter)
 
-        response = client.post('/servicex/transformation',
+        response = client.post('/api/v1/servicex/transformation',
                                json=self._generate_transformation_request())
         assert response.status_code == 400
         assert response.json == {"message": "The requested transformer docker image doesn't exist: ssl-hep/foo:latest"}  # noqa: E501
@@ -268,7 +268,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                        'TRANSFORMER_VALIDATE_DOCKER_IMAGE': False}
                                    )
 
-        response = client.post('/servicex/transformation',
+        response = client.post('/api/v1/servicex/transformation',
                                json=self._generate_transformation_request())
         assert response.status_code == 200
         mock_docker_repo_adapter.check_image_exists.assert_not_called()
@@ -282,7 +282,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    code_gen_service=mock_code_gen_service)
-        response = client.post('/servicex/transformation',
+        response = client.post('/api/v1/servicex/transformation',
                                json=request)
 
         assert response.status_code == 400
@@ -296,7 +296,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    code_gen_service=mock_code_gen_service)
-        response = client.post('/servicex/transformation',
+        response = client.post('/api/v1/servicex/transformation',
                                json=request)
 
         assert response.status_code == 400
@@ -314,7 +314,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                    code_gen_service=mock_code_gen_service,
                                    lookup_result_processor=mock_processor)
 
-        response = client.post('/servicex/transformation',
+        response = client.post('/api/v1/servicex/transformation',
                                json=request)
 
         assert response.status_code == 400
@@ -344,7 +344,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                    rabbit_adaptor=mock_rabbit_adaptor,
                                    object_store=mock_object_store,
                                    docker_repo_adapter=mock_docker_repo_adapter)
-        response = client.post('/servicex/transformation',
+        response = client.post('/api/v1/servicex/transformation',
                                json=transformation_request)
         assert response.status_code == 200
 
@@ -375,7 +375,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                    elasticsearch_adapter=mock_elasticsearch_adapter,
                                    docker_repo_adapter=mock_docker_repo_adapter)
 
-        response = client.post('/servicex/transformation',
+        response = client.post('/api/v1/servicex/transformation',
                                json=transformation_request)
         assert response.status_code == 200
 
@@ -397,7 +397,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert record_body['info'] == ' '
 
     def test_submit_with_auth(self, mocker, mock_rabbit_adaptor, mock_docker_repo_adapter):
-        import servicex.resources.submit_transformation_request
+        import servicex.api.submit_transformation_request
 
         local_config = {
             'ENABLE_AUTH': True
@@ -412,7 +412,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                   'workers': 10}
 
         mock_validate_user = mocker.patch.object(
-            servicex.resources.submit_transformation_request.SubmitTransformationRequest,
+            servicex.api.submit_transformation_request.SubmitTransformationRequest,
             '_validate_user',
             return_value=(True, None))
 
@@ -420,13 +420,13 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                    rabbit_adaptor=mock_rabbit_adaptor,
                                    docker_repo_adapter=mock_docker_repo_adapter)
 
-        response = client.post('/servicex/transformation',
+        response = client.post('/api/v1/servicex/transformation',
                                json=transformation_request)
         assert response.status_code == 200
         mock_validate_user.assert_called()
 
     def test_submit_with_auth_failure(self, mocker, mock_rabbit_adaptor):
-        import servicex.resources.submit_transformation_request
+        import servicex.api.submit_transformation_request
 
         local_config = {
             'ENABLE_AUTH': True
@@ -441,14 +441,14 @@ class TestSubmitTransformationRequest(ResourceTestBase):
                                   'workers': 10}
 
         mock_validate_user = mocker.patch.object(
-            servicex.resources.submit_transformation_request.SubmitTransformationRequest,
+            servicex.api.submit_transformation_request.SubmitTransformationRequest,
             '_validate_user',
             return_value=(False, "This is a test"))
 
         client = self._test_client(extra_config=local_config,
                                    rabbit_adaptor=mock_rabbit_adaptor)
 
-        response = client.post('/servicex/transformation',
+        response = client.post('/api/v1/servicex/transformation',
                                json=transformation_request)
         assert response.status_code == 401
         mock_validate_user.assert_called()

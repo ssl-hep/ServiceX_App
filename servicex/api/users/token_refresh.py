@@ -29,7 +29,7 @@
 from flask_jwt_extended import (create_access_token, get_raw_jwt, decode_token,
                                 jwt_refresh_token_required, get_jwt_identity)
 
-from servicex.resources.servicex_resource import ServiceXResource
+from servicex.api.servicex_resource import ServiceXResource
 from servicex.models import UserModel
 
 

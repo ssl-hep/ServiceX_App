@@ -25,33 +25,34 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import current_app as app
+from flask import Blueprint
+from flask_restx import Api
+
+from .add_file_to_dataset import AddFileToDataset
+from .file_transform_status import FileTransformationStatus
+from .fileset_complete import FilesetComplete
+from .preflight_check import PreflightCheck
+from .query_transformation_request import QueryTransformationRequest
+from .submit_transformation_request import SubmitTransformationRequest
+from .transform_errors import TransformErrors
+from .transform_start import TransformStart
+from .transform_status import TransformationStatus, TransformationStatusInternal
+from .transformer_file_complete import TransformerFileComplete
+
+from .users.all_users import AllUsers
+from .users.token_refresh import TokenRefresh
+from .users.accept_user import AcceptUser
+from .users.delete_user import DeleteUser
+from .users.pending_all import PendingAllUsers
+from .users.slack_interaction import SlackInteraction
+
+api_blueprint = Blueprint('api', 'api_name')
+api = Api(api_blueprint)
 
 
-def add_routes(api, transformer_manager, rabbit_mq_adaptor,
-               object_store, elasticsearch_adapter, code_gen_service,
-               lookup_result_processor, docker_repo_adapter):
-    from servicex.resources.submit_transformation_request import SubmitTransformationRequest
-    from servicex.resources.transform_start import TransformStart
-    from servicex.resources.transform_status \
-        import TransformationStatus, TransformationStatusInternal
-    from servicex.resources.file_transform_status import FileTransformationStatus
-    from servicex.resources.query_transformation_request import QueryTransformationRequest
-    from servicex.resources.add_file_to_dataset import AddFileToDataset
-    from servicex.resources.preflight_check import PreflightCheck
-    from servicex.resources.fileset_complete import FilesetComplete
-    from servicex.resources.transformer_file_complete import TransformerFileComplete
-    from servicex.resources.transform_errors import TransformErrors
-
-    from servicex.resources.users.all_users import AllUsers
-    from servicex.resources.users.token_refresh import TokenRefresh
-    from servicex.resources.users.accept_user import AcceptUser
-    from servicex.resources.users.delete_user import DeleteUser
-    from servicex.resources.users.pending_all import PendingAllUsers
-    from servicex.resources.users.slack_interaction import SlackInteraction
-
-    from servicex.web import home, sign_in, sign_out, auth_callback, \
-        create_profile, view_profile, edit_profile, api_token
+def add_api_routes(transformer_manager, rabbit_mq_adaptor,
+                   object_store, elasticsearch_adapter, code_gen_service,
+                   lookup_result_processor, docker_repo_adapter):
 
     SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
                                          object_store=object_store,
@@ -59,18 +60,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                                          code_gen_service=code_gen_service,
                                          lookup_result_processor=lookup_result_processor,
                                          docker_repo_adapter=docker_repo_adapter)
-
-    # Web Frontend Routes
-    app.add_url_rule('/', 'home', home)
-    app.add_url_rule('/sign-in', 'sign_in', sign_in)
-    app.add_url_rule('/sign-out', 'sign_out', sign_out)
-    app.add_url_rule('/auth-callback', 'auth_callback', auth_callback)
-    app.add_url_rule('/api-token', 'api_token', api_token)
-    app.add_url_rule('/profile', 'profile', view_profile)
-    app.add_url_rule('/profile/new', 'create_profile', create_profile,
-                     methods=['GET', 'POST'])
-    app.add_url_rule('/profile/edit', 'edit_profile', edit_profile,
-                     methods=['GET', 'POST'])
 
     # User management and Authentication Endpoints
     api.add_resource(TokenRefresh, '/token/refresh')

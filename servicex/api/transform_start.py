@@ -28,7 +28,7 @@
 from flask import current_app
 
 from servicex.models import TransformRequest, db
-from servicex.resources.servicex_resource import ServiceXResource
+from servicex.api.servicex_resource import ServiceXResource
 
 
 class TransformStart(ServiceXResource):

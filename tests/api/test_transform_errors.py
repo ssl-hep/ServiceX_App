@@ -54,7 +54,7 @@ class TestTransformErrors(ResourceTestBase):
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
 
-        response = client.get('/servicex/transformation/1234/errors')
+        response = client.get('/api/v1/servicex/transformation/1234/errors')
         assert response.status_code == 200
         assert response.json == {'errors': [
             {'pod-name': 'openthepodhal',
@@ -77,7 +77,7 @@ class TestTransformErrors(ResourceTestBase):
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
 
-        response = client.get('/servicex/transformation/1234/errors')
+        response = client.get('/api/v1/servicex/transformation/1234/errors')
         assert response.status_code == 404
 
         mock_transform_request_read.assert_called_with("1234")

@@ -29,7 +29,7 @@ from flask_jwt_extended import jwt_optional
 from flask_restx import reqparse
 from flask import jsonify
 from servicex.models import TransformationResult, TransformRequest, db
-from servicex.resources.servicex_resource import ServiceXResource
+from servicex.api.servicex_resource import ServiceXResource
 
 
 status_request_parser = reqparse.RequestParser()

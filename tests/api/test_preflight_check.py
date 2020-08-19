@@ -25,13 +25,14 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from servicex import LookupResultProcessor
 from tests.resource_test_base import ResourceTestBase
 
 
-class TestFilesetComplete(ResourceTestBase):
-    def test_put_fileset_complete(self, mocker,  mock_rabbit_adaptor):
+class TestPreflightCheck(ResourceTestBase):
+    def test_post_preflight_check(self, mocker, mock_rabbit_adaptor):
         import servicex
+        from servicex.lookup_result_processor import LookupResultProcessor
+
         submitted_request = self._generate_transform_request()
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
@@ -39,25 +40,42 @@ class TestFilesetComplete(ResourceTestBase):
             return_value=submitted_request)
 
         mock_processor = mocker.MagicMock(LookupResultProcessor)
+        mock_processor.publish_preflight_request = mocker.Mock()
+
+        client = self._test_client(
+            rabbit_adaptor=mock_rabbit_adaptor,
+            lookup_result_processor=mock_processor)
+        response = client.post('/api/v1/servicex/internal/transformation/1234/preflight',
+                               json={'file_path': '/foo/bar.root'})
+        assert response.status_code == 200
+        mock_transform_request_read.assert_called_with('1234')
+        mock_processor.publish_preflight_request.assert_called_with(
+            submitted_request,
+            '/foo/bar.root'
+        )
+
+        assert response.json == {
+            "request-id": '1234',
+            "file-id": 42
+        }
+
+    def test_preflight_check_with_exception(self, mocker, mock_rabbit_adaptor):
+        import servicex
+        from servicex.lookup_result_processor import LookupResultProcessor
+
+        submitted_request = self._generate_transform_request()
+
+        mocker.patch.object(
+            servicex.models.TransformRequest,
+            'return_request',
+            return_value=submitted_request)
+
+        mock_processor = mocker.MagicMock(LookupResultProcessor)
+        mock_processor.publish_preflight_request = mocker.Mock(side_effect=Exception('Test'))
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    lookup_result_processor=mock_processor)
-
-        response = client.put('/servicex/internal/transformation/1234/complete',
-                              json={
-                                  'files': 17,
-                                  'files-skipped': 2,
-                                  'total-events': 1024,
-                                  'total-bytes': 2046,
-                                  'elapsed-time': 42
-                              })
-        assert response.status_code == 200
-        mock_transform_request_read.assert_called_with('1234')
-        mock_processor.report_fileset_complete.assert_called_with(
-            submitted_request,
-            num_files=17,
-            num_skipped=2,
-            total_events=1024,
-            total_bytes=2046,
-            did_lookup_time=42
-        )
+        response = client.post('/api/v1/servicex/internal/transformation/1234/preflight',
+                               json={'file_path': '/foo/bar.root'})
+        assert response.status_code == 500
+        assert response.json == {'message': 'Something went wrong'}

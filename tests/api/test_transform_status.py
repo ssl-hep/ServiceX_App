@@ -39,7 +39,7 @@ class TestTransformStatus(ResourceTestBase):
             'return_request',
             return_value=mock_request)
 
-        response = client.post('/servicex/internal/transformation/1234/status',
+        response = client.post('/api/v1/servicex/internal/transformation/1234/status',
                                json={
                                    'timestamp': '2019-09-18T16:15:09.457481',
                                    'severity': "info",
@@ -59,7 +59,7 @@ class TestTransformStatus(ResourceTestBase):
             'return_request',
             return_value=mock_request)
 
-        response = client.post('/servicex/internal/transformation/1234/status',
+        response = client.post('/api/v1/servicex/internal/transformation/1234/status',
                                json={
                                    'timestamp': '2019-09-18T16:15:09.457481',
                                    'severity': "fatal",
@@ -71,7 +71,7 @@ class TestTransformStatus(ResourceTestBase):
 
     def test_post_status_bad_data(self, mock_rabbit_adaptor):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
-        response = client.post('/servicex/internal/transformation/1234/status',
+        response = client.post('/api/v1/servicex/internal/transformation/1234/status',
                                json={'foo': 'bar'})
 
         assert response.status_code == 400
@@ -104,7 +104,7 @@ class TestTransformStatus(ResourceTestBase):
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
 
-        response = client.get('/servicex/transformation/1234/status')
+        response = client.get('/api/v1/servicex/transformation/1234/status')
         assert response.status_code == 200
         assert response.json == {
             "status": "Submitted",
@@ -135,6 +135,6 @@ class TestTransformStatus(ResourceTestBase):
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
 
-        response = client.get('/servicex/transformation/1234/status')
+        response = client.get('/api/v1/servicex/transformation/1234/status')
         assert response.status_code == 404
         mock_transform_request_read.assert_called_with("1234")

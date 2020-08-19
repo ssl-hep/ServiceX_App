@@ -102,7 +102,7 @@ class TestSlackInteraction(ResourceTestBase):
     def test_slack_interaction_not_configured(self, mocker, mock_rabbit_adaptor):
         mock_post = mocker.patch('requests.post')
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
-        response: Response = client.post('/slack',
+        response: Response = client.post('/api/v1/slack',
                                          data={'payload': json.dumps(payload)})
         assert response.status_code == 403
         with client.application.app_context():
@@ -115,7 +115,7 @@ class TestSlackInteraction(ResourceTestBase):
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor,
                                    extra_config={'SLACK_SIGNING_SECRET': 'my-slack-secret'})
         headers = {'X-Slack_Request-Timestamp': 0}
-        response: Response = client.post('/slack',
+        response: Response = client.post('/api/v1/slack',
                                          data={'payload': json.dumps(payload)},
                                          headers=headers)
         assert response.status_code == 403
@@ -132,7 +132,7 @@ class TestSlackInteraction(ResourceTestBase):
             'X-Slack_Request-Timestamp': time.time(),
             'X-Slack-Signature': 'abc'
         }
-        response: Response = client.post('/slack',
+        response: Response = client.post('/api/v1/slack',
                                          data={'payload': json.dumps(payload)},
                                          headers=headers)
         assert response.status_code == 401
@@ -156,7 +156,7 @@ class TestSlackInteraction(ResourceTestBase):
             'X-Slack_Request-Timestamp': timestamp,
             'X-Slack-Signature': "v0=" + signature
         }
-        response: Response = client.post('/slack',
+        response: Response = client.post('/api/v1/slack',
                                          data={'payload': json.dumps(payload)},
                                          headers=headers)
         assert response.status_code == 200

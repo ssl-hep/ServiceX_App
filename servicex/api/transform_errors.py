@@ -26,28 +26,26 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from flask_jwt_extended import jwt_optional
-from flask import current_app
 
-from servicex.models import TransformRequest
-from servicex.resources.servicex_resource import ServiceXResource
+from servicex.models import TransformRequest, FileStatus
+from servicex.api.servicex_resource import ServiceXResource
 
 
-class QueryTransformationRequest(ServiceXResource):
+class TransformErrors(ServiceXResource):
     @jwt_optional
-    def get(self, request_id=None):
+    def get(self, request_id):
         is_auth, auth_reject_message = self._validate_user()
         if not is_auth:
             return {'message': f'Authentication Failed: {str(auth_reject_message)}'}, 401
 
-        if request_id:
-            request_rec = TransformRequest.to_json(
-                TransformRequest.return_request(request_id))
+        submitted_request = TransformRequest.return_request(request_id)
+        if not submitted_request:
+            return "Transform Not Found", "404"
 
-            if current_app.config['OBJECT_STORE_ENABLED'] and \
-                    request_rec['result-destination'] == TransformRequest.OBJECT_STORE_DEST:
-                request_rec['minio-endpoint'] = current_app.config['MINIO_PUBLIC_URL']
-                request_rec['minio-access-key'] = current_app.config['MINIO_ACCESS_KEY']
-                request_rec['minio-secret-key'] = current_app.config['MINIO_SECRET_KEY']
-            return request_rec
-        else:
-            return TransformRequest.return_all()
+        results = [{
+            "pod-name": result[1].pod_name,
+            "file": result[0].file_path,
+            "events": result[0].file_events,
+            "info": result[1].info
+        } for result in FileStatus.failures_for_request(request_id)]
+        return {"errors": list(results)}

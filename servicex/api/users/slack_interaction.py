@@ -7,7 +7,7 @@ import requests
 from flask import request, current_app, Response
 from sqlalchemy.orm.exc import NoResultFound
 
-from servicex.resources.servicex_resource import ServiceXResource
+from servicex.api.servicex_resource import ServiceXResource
 from servicex.models import UserModel
 from servicex.web.slack_msg_builder import signup_ia, missing_slack_app, request_expired, \
     verification_failed, user_not_found

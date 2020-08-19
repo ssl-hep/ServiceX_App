@@ -40,7 +40,7 @@ class TestQueryTransformationRequest(ResourceTestBase):
             ])
 
         client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
-        response = client.get('/servicex/transformation')
+        response = client.get('/api/v1/servicex/transformation')
         assert response.status_code == 200
         assert response.json == [{'request_id': '123'}, {'request_id': '456'}]
         mock_transform_request_read_all.assert_called()
@@ -58,7 +58,7 @@ class TestQueryTransformationRequest(ResourceTestBase):
 
         client = self._test_client(extra_config=local_config,
                                    rabbit_adaptor=mock_rabbit_adaptor)
-        response = client.get('/servicex/transformation/1234')
+        response = client.get('/api/v1/servicex/transformation/1234')
         assert response.status_code == 200
         print(response.json)
         assert response.json == {'request_id': 'BR549', 'did': '123-456-789',
@@ -95,7 +95,7 @@ class TestQueryTransformationRequest(ResourceTestBase):
 
         client = self._test_client(extra_config=local_config,
                                    rabbit_adaptor=mock_rabbit_adaptor)
-        response = client.get('/servicex/transformation/1234')
+        response = client.get('/api/v1/servicex/transformation/1234')
         assert response.status_code == 200
         print(response.json)
         assert response.json == {'request_id': 'BR549', 'did': '123-456-789',
@@ -135,7 +135,7 @@ class TestQueryTransformationRequest(ResourceTestBase):
 
         client = self._test_client(extra_config=local_config,
                                    rabbit_adaptor=mock_rabbit_adaptor)
-        response = client.get('/servicex/transformation/1234')
+        response = client.get('/api/v1/servicex/transformation/1234')
         assert response.status_code == 200
         print(response.json)
         assert response.json == {'request_id': 'BR549', 'did': '123-456-789',
