@@ -39,7 +39,7 @@
         {% endif %}
         </div>
         <!-- Navbar Right Side -->
-        {% if config['ENABLE_AUTH'] %}
+        {% if config['ENABLE_AUTH'] and not config['DISABLE_USER_MGMT'] %}
           <div class="navbar-nav">
           {% if not session['is_authenticated'] %}
             <a href="{{ url_for('sign_in') }}" class="nav-item nav-link">Sign In</a>

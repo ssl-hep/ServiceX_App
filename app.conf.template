@@ -10,6 +10,11 @@ DOCS_BASE_URL = 'https://servicex.readthedocs.io/en/latest/'
 # Enable JWT auth on public endpoints
 ENABLE_AUTH=False
 
+# Disable built-in ServiceX user management system (OAuth via Globus)
+# If set to True while ENABLE_AUTH is also True, then you must generate your
+# own JWT refresh tokens with identity claims using the JWT_SECRET_KEY
+DISABLE_USER_MGMT = False
+
 # Globus configuration - obtained at https://auth.globus.org/v2/web/developers
 GLOBUS_CLIENT_ID='globus-client-id'
 GLOBUS_CLIENT_SECRET='globus-client-secret'
