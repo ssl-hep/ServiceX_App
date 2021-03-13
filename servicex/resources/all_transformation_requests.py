@@ -27,24 +27,18 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 from typing import List
 
-from flask_restful import reqparse
+from flask import request
 
 from servicex.decorators import auth_required
 from servicex.models import TransformRequest
 from servicex.resources.servicex_resource import ServiceXResource
 
-parser = reqparse.RequestParser()
-parser.add_argument('submitted_by', type=int, location='args')
-
 
 class AllTransformationRequests(ServiceXResource):
     @auth_required
     def get(self):
-        args = parser.parse_args()
-        query_id = args.get('submitted_by')
         transforms: List[TransformRequest]
-        if query_id:
-            transforms = TransformRequest.query.filter_by(submitted_by=query_id)
-        else:
-            transforms = TransformRequest.query.all()
+        column_names = set(TransformRequest.__table__.columns.keys())
+        params = {k: v for k, v in request.args.items() if k in column_names}
+        transforms = TransformRequest.query.filter_by(**params)
         return TransformRequest.return_json(transforms)
