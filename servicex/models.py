@@ -26,7 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import hashlib
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, Iterable
 
 from flask_sqlalchemy import SQLAlchemy
@@ -218,6 +218,18 @@ class TransformRequest(db.Model):
             return submitted_request.files - int(count or 0)
         else:
             return None
+
+    @property
+    def submitter_name(self):
+        if self.submitted_by is None:
+            return None
+        elif self.user is None:
+            return "[deleted]"
+        return self.user.name
+
+    @property
+    def age(self) -> timedelta:
+        return datetime.utcnow() - self.submit_time
 
 
 class TransformationResult(db.Model):
