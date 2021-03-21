@@ -56,6 +56,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.web.sign_in import sign_in
     from servicex.web.sign_out import sign_out
     from servicex.web.auth_callback import auth_callback
+    from servicex.web.dashboard import dashboard
     from servicex.web.view_profile import view_profile
     from servicex.web.edit_profile import edit_profile
     from servicex.web.api_token import api_token
@@ -79,6 +80,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     app.add_url_rule('/auth-callback', 'auth_callback', auth_callback)
     app.add_url_rule('/api-token', 'api_token', api_token)
     app.add_url_rule('/.servicex', 'servicex-file', servicex_file)
+    app.add_url_rule('/dashboard', 'dashboard', dashboard)
     app.add_url_rule('/profile', 'profile', view_profile)
     app.add_url_rule('/profile/new', 'create_profile', create_profile,
                      methods=['GET', 'POST'])

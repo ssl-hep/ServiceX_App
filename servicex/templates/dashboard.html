@@ -1,0 +1,21 @@
+{% extends "authenticated-base.html" %}
+
+{% block content %}
+
+<div>
+  <div class="content-section">
+    <div class="lead">
+      Welcome to ServiceX, {{ session['name'] }}!
+    </div>
+  </div>
+
+  <div class="content-section">
+    <h4 class="mb-3">Transformation Requests</h4>
+    {% include "requests_table.html" %}
+    {% if not transformation_requests %}
+      {% include "get_started.html" %}
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}

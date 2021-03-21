@@ -16,8 +16,7 @@
         integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
 
   <!-- FontAwesome -->
-  <script src="https://use.fontawesome.com/541a85adb4.js"></script>
-
+  <script src="https://kit.fontawesome.com/80c761d704.js" crossorigin="anonymous"></script>
   <!-- Custom CSS -->
   <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
 
@@ -37,18 +36,15 @@
              href="{{ config['DOCS_BASE_URL'] }}">
             Docs
           </a>
-          <a href="/active-requests" class="nav-item nav-link">
-            Active Requests
-          </a>
         </div>
         <!-- Navbar Right Side -->
         {% if config['ENABLE_AUTH'] %}
           <div class="navbar-nav">
           {% if not session['is_authenticated'] %}
-            <a href="/sign-in" class="nav-item nav-link">Sign In</a>
+            <a href="{{ url_for('sign_in') }}" class="nav-item nav-link">Sign In</a>
           {% else %}
-            <a href="/profile" class="nav-item nav-link">{{ session['name'] }}</a>
-            <a href="/sign-out" class="nav-item nav-link">
+            <a href=" {{ url_for('dashboard') }}" class="nav-item nav-link">{{ session['name'] }}</a>
+            <a href="{{ url_for('sign_out') }}" class="nav-item nav-link">
               <i class="fa fa-sign-out" aria-hidden="true"></i>
             </a>
           {% endif %}
@@ -60,6 +56,9 @@
 </header>
 
 <main role="main" class="container">
+  <div class="row">
+    {% block nav %}{% endblock %}
+  </div>
   <div class="row">
     <div class="col-md-12">
       {% with messages = get_flashed_messages(with_categories=true) %}
@@ -96,6 +95,10 @@
         $('[data-toggle="tooltip"]').tooltip({trigger: 'hover'})
     })
 </script>
+  <script>
+    $(document).ready(function () {
+    $("#{{request.endpoint}}").addClass("active"); })
+  </script>
 
 <!-- Page-specific JS -->
 {% block scripts %}{% endblock %}

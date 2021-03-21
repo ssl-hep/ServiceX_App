@@ -9,5 +9,5 @@ def active_requests():
         .filter(TransformRequest.status.in_({"Submitted", "Running"}))\
         .all()
     return render_template(
-        "active_requests.html", transformation_requests=reqs, humanize=humanize
+        "requests_table.html", transformation_requests=reqs, humanize=humanize
     )

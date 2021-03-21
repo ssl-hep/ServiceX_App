@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% from 'bootstrap/nav.html' import render_nav_item %}
+
+{#{% macro nav_link(endpoint, text) %}#}
+{#  <li class="nav-item">#}
+{#    <a href="{{ url_for(endpoint) }}" class="nav-link {{ 'active' if request.url_rule.endpoint == endpoint else '' }}">#}
+{#      {{ text }}#}
+{#    </a>#}
+{#  </li>#}
+{#{% endmacro %}#}
+
+{% block nav %}
+  <ul class="nav nav-pills mb-4">
+    {{ render_nav_item('dashboard', 'Dashboard') }}
+    {{ render_nav_item('profile', 'Profile') }}
+{#    {{ nav_link('dashboard', 'Dashboard') }}#}
+{#    {{ nav_link('profile', 'Profile') }}#}
+  </ul>
+{% endblock %}
