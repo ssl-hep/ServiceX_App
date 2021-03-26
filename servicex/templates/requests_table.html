@@ -19,7 +19,7 @@
   {% for req in transformation_requests %}
     <tr>
       <th scope="row" style="word-break: break-all">
-        <a href="/transformation-request/{{ req.id }}">{{ req.id }}</a>
+        <a href="/transformation-request/{{ req.id }}">{{ req.title or "Default title" }}</a>
       </th>
       <td>{{ req.status }}</td>
       {% if config['ENABLE_AUTH'] %}<td>{{ req.submitter_name }}</td>{% endif %}

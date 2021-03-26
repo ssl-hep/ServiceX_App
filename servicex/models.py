@@ -34,6 +34,7 @@ from sqlalchemy import func, ForeignKey, DateTime
 from sqlalchemy.orm.exc import NoResultFound
 
 from servicex.mailgun_adaptor import MailgunAdaptor
+from servicex.transformer_manager import TransformerManager
 
 db = SQLAlchemy()
 max_string_size = 10485760
@@ -138,12 +139,13 @@ class TransformRequest(db.Model):
     _cache = {}
 
     id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(128))
+    request_id = db.Column(db.String(48), unique=True, nullable=False, index=True)
     submit_time = db.Column(db.DateTime, nullable=False)
     did = db.Column(db.String(512), unique=False, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=True)
     selection = db.Column(db.String(max_string_size), unique=False, nullable=True)
     tree_name = db.Column(db.String(512), unique=False, nullable=True)
-    request_id = db.Column(db.String(48), unique=True, nullable=False)
     image = db.Column(db.String(128), nullable=True)
     chunk_size = db.Column(db.Integer, nullable=True)
     workers = db.Column(db.Integer, nullable=True)
@@ -230,6 +232,9 @@ class TransformRequest(db.Model):
     @property
     def age(self) -> timedelta:
         return datetime.utcnow() - self.submit_time
+
+    def get_deployment_status(self, transformer_manager: TransformerManager):
+        return transformer_manager.get_deployment_status(self.request_id)
 
 
 class TransformationResult(db.Model):

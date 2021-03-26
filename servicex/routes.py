@@ -88,7 +88,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
                      methods=['GET', 'POST'])
     app.add_url_rule('/active-requests', 'active_requests', active_requests)
     app.add_url_rule(
-        '/transformation-request/<int:id_>',
+        '/transformation-request/<id_>',
         'transformation_request',
         transformation_request
     )
