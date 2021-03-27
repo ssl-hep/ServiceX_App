@@ -19,3 +19,31 @@
 </div>
 
 {% endblock %}
+
+{% block scripts %}
+  {{ super() }}
+  <script>
+      let watched = new Set(
+          {{ transformation_requests | selectattr("incomplete") | map(attribute="request_id") | list | tojson | safe }}
+      );
+      console.log(watched);
+
+      function update() {
+          Promise.all([...watched].map((req_id) => {
+              return fetch(document.location.origin + `/servicex/transformation/${req_id}/deployment-status`)
+                  .then((resp) => resp.json())
+                  .then((data) => {
+                      console.log(`${req_id} returned`);
+                      console.log(data);
+                      $(`#replicas-${req_id}`).text(data["ready_replicas"]);
+                  });
+          }));
+          setTimeout(update, 10000);
+      }
+
+      $(document).ready(function () {
+          console.log("Hi");
+          update();
+      })
+  </script>
+{% endblock %}

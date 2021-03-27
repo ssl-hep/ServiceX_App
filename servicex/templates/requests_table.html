@@ -9,10 +9,11 @@
   <thead class="thead-dark">
     <tr>
       <th scope="col">ID</th>
-      <th scope="col">Status</th>
       {% if config['ENABLE_AUTH'] %}<th scope="col">Submitted by</th>{% endif %}
       <th scope="col">Submitted at</th>
       <th scope="col">Age</th>
+      <th scope="col">Status</th>
+      <th scope="col">Workers</th>
     </tr>
   </thead>
   <tbody>
@@ -21,10 +22,11 @@
       <th scope="row" style="word-break: break-all">
         <a href="/transformation-request/{{ req.id }}">{{ req.title or "Default title" }}</a>
       </th>
-      <td>{{ req.status }}</td>
       {% if config['ENABLE_AUTH'] %}<td>{{ req.submitter_name }}</td>{% endif %}
       <td>{{ req.submit_time.strftime("%Y-%m-%d %H:%M:%S") }}</td>
       <td>{{ humanize.naturaldelta(req.age) }}</td>
+      <td>{{ req.status }}</td>
+      <td id="replicas-{{ req.request_id }}">--</td>
     </tr>
   {% endfor %}
   </tbody>

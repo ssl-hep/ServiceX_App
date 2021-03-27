@@ -95,10 +95,11 @@
         $('[data-toggle="tooltip"]').tooltip({trigger: 'hover'})
     })
 </script>
-  <script>
+<script>
     $(document).ready(function () {
-    $("#{{request.endpoint}}").addClass("active"); })
-  </script>
+      $("#{{request.endpoint}}").addClass("active");
+    })
+</script>
 
 <!-- Page-specific JS -->
 {% block scripts %}{% endblock %}

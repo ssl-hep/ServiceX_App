@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import base64
+from typing import Optional
 
 import kubernetes
 from kubernetes import client
@@ -240,17 +241,19 @@ class TransformerManager:
                                               namespace=namespace)
 
     @staticmethod
-    def get_number_of_workers(request_id: str) -> int:
+    def get_deployment_status(
+            request_id: str
+    ) -> Optional[kubernetes.client.AppsV1beta1DeploymentStatus]:
         namespace = current_app.config["TRANSFORMER_NAMESPACE"]
         api = client.AppsV1Api()
         selector = f"metadata.name=transformer-{request_id}"
+        # selector = f"metadata.name=aeckart-servicex-app"
         results: kubernetes.client.AppsV1beta1DeploymentList
         results = api.list_namespaced_deployment(namespace, field_selector=selector)
         if not results.items:
-            return 0
+            return None
         deployment: kubernetes.client.AppsV1beta1Deployment = results.items[0]
-        status: kubernetes.client.AppsV1beta1DeploymentStatus = deployment.status
-        return status.ready_replicas
+        return deployment.status
 
     @staticmethod
     def create_configmap_from_zip(zipfile, request_id, namespace):

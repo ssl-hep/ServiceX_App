@@ -233,6 +233,10 @@ class TransformRequest(db.Model):
     def age(self) -> timedelta:
         return datetime.utcnow() - self.submit_time
 
+    @property
+    def incomplete(self) -> bool:
+        return self.status != "Complete"
+
     def get_deployment_status(self, transformer_manager: TransformerManager):
         return transformer_manager.get_deployment_status(self.request_id)
 
