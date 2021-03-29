@@ -1,6 +1,5 @@
 from flask import url_for, render_template, Response, make_response
 from flask_jwt_extended import create_access_token
-from pytest import fixture
 
 from tests.web.web_test_base import WebTestBase
 
@@ -10,15 +9,6 @@ def fake_route() -> Response:
 
 
 class TestDecorators(WebTestBase):
-    @fixture
-    def mock_jwt_extended(self, mocker):
-        """
-        During unit tests, the jwt_required decorator from Flask-JWT-extended
-        is simply mocked to act as the identity function.
-        """
-        mocker.patch('servicex.decorators.jwt_required', side_effect=lambda f: f)
-        mocker.patch('servicex.decorators.verify_jwt_in_request')
-
     @staticmethod
     def fake_header():
         access_token = create_access_token(identity='abcd')
