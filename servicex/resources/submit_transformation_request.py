@@ -84,7 +84,8 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.parser.add_argument('workers', type=int)
         cls.parser.add_argument('result-destination', required=True, choices=[
             TransformRequest.KAFKA_DEST,
-            TransformRequest.OBJECT_STORE_DEST
+            TransformRequest.OBJECT_STORE_DEST,
+            TransformRequest.VOLUME_DEST
         ])
         cls.parser.add_argument(
             'result-format', choices=['arrow', 'parquet', 'root-file'], default='arrow'
@@ -124,9 +125,9 @@ class SubmitTransformationRequest(ServiceXResource):
                     TransformRequest.OBJECT_STORE_DEST:
                 self.object_store.create_bucket(request_id)
                 # WHat happens if object-store and object_store is None?
-
-            if args['result-destination'] == TransformRequest.KAFKA_DEST:
-                broker = args['kafka']['broker']
+            #if transformation_request['result-destination'] == TransformRequest.VOLUME_DEST:
+            if transformation_request['result-destination'] == TransformRequest.KAFKA_DEST:
+                broker = transformation_request['kafka']['broker']
             else:
                 broker = None
 
