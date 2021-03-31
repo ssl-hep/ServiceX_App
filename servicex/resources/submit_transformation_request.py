@@ -59,7 +59,8 @@ parser.add_argument('chunk-size', required=False, type=int)
 parser.add_argument('workers', required=False, type=int)
 parser.add_argument('result-destination', required=True, choices=[
     TransformRequest.KAFKA_DEST,
-    TransformRequest.OBJECT_STORE_DEST
+    TransformRequest.OBJECT_STORE_DEST,
+    TransformRequest.VOLUME_DEST
 ])
 parser.add_argument('result-format', required=False,
                     choices=['arrow', 'parquet', 'root-file'], default='arrow')
@@ -120,7 +121,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     TransformRequest.OBJECT_STORE_DEST:
                 self.object_store.create_bucket(request_id)
                 # WHat happens if object-store and object_store is None?
-
+            #if transformation_request['result-destination'] == TransformRequest.VOLUME_DEST:
             if transformation_request['result-destination'] == TransformRequest.KAFKA_DEST:
                 broker = transformation_request['kafka']['broker']
             else:
