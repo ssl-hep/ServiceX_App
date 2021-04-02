@@ -111,7 +111,7 @@ class TestLookupResultProcessor(ResourceTestBase):
 
     def test_report_fileset_complete(self, mocker, mock_rabbit_adaptor):
         processor = LookupResultProcessor(mock_rabbit_adaptor,
-                                          http: // cern.analysis.ch: 5000 /")
+                                          "http://cern.analysis.ch:5000/")
 
         transform_request = self._generate_transform_request()
 
