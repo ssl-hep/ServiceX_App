@@ -49,8 +49,6 @@ class ResourceTestBase:
             'TRANSFORMER_NAMESPACE': "my-ws",
             'TRANSFORMER_MANAGER_ENABLED': False,
             'TRANSFORMER_AUTOSCALE_ENABLED': True,
-            'TRANSFORMER_MIN_REPLICAS': 1,
-            'TRANSFORMER_MAX_REPLICAS': 5,
             'ADVERTISED_HOSTNAME': 'cern.analysis.ch:5000',
             'TRANSFORMER_PULL_POLICY': 'Always',
             'TRANSFORMER_VALIDATE_DOCKER_IMAGE': True,
@@ -72,6 +70,7 @@ class ResourceTestBase:
                      transformation_manager=None,
                      rabbit_adaptor=None,
                      object_store=None,
+                     elasticsearch_adapter=None,
                      code_gen_service=None,
                      lookup_result_processor=None,
                      docker_repo_adapter=None):
@@ -83,7 +82,7 @@ class ResourceTestBase:
             config.update(extra_config)
 
         app = create_app(config, transformation_manager, rabbit_adaptor,
-                         object_store, code_gen_service,
+                         object_store, elasticsearch_adapter, code_gen_service,
                          lookup_result_processor, docker_repo_adapter)
 
         return app.test_client()
