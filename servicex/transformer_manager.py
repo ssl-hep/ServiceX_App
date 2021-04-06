@@ -86,7 +86,14 @@ class TransformerManager:
                 field_path="metadata.name"))
         env_var_pod_name = client.V1EnvVar("POD_NAME", value_from=pod_name_value_from)
 
-        env = env + [env_var_pod_name]
+        # Provide each pod with and environment var holding that instance name
+        instance_name_value_from = client.V1EnvVarSource(
+            field_ref=client.V1ObjectFieldSelector(
+                field_path="metadata.labels['instance_name']"))
+        env_var_instance_name = client.V1EnvVar("INSTANCE_NAME",
+                                                value_from=instance_name_value_from)
+
+        env = env + [env_var_pod_name, env_var_instance_name]
 
         if result_destination == 'object-store':
             env = env + [
