@@ -227,10 +227,10 @@ class TransformerManager:
             namespace=namespace
         )
 
-        api_v1 = client.CoreV1Api()
+        api_core = client.CoreV1Api()
         configmap_name = "{}-generated-source".format(request_id)
-        api_v1.delete_namespaced_config_map(name=configmap_name,
-                                            namespace=namespace)
+        api_core.delete_namespaced_config_map(name=configmap_name,
+                                              namespace=namespace)
 
     @staticmethod
     def create_configmap_from_zip(zipfile, request_id, namespace):
