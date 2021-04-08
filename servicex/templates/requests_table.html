@@ -13,6 +13,7 @@
       <th scope="col">Submitted at</th>
       <th scope="col">Age</th>
       <th scope="col">Status</th>
+      <th scope="col">Files completed</th>
       <th scope="col">Workers</th>
     </tr>
   </thead>
@@ -25,8 +26,25 @@
       {% if config['ENABLE_AUTH'] %}<td>{{ req.submitter_name }}</td>{% endif %}
       <td>{{ req.submit_time.strftime("%Y-%m-%d %H:%M:%S") }}</td>
       <td>{{ humanize.naturaldelta(req.age) }}</td>
-      <td>{{ req.status }}</td>
-      <td id="replicas-{{ req.request_id }}">--</td>
+      <td>
+        <div id="status-{{ req.request_id }}">
+          {{ req.status }}
+        </div>
+      {% if req.incomplete %}
+        <div class="progress" id="progress-{{ req.request_id }}">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" id="progress-bar-{{ req.request_id }}">
+          </div>
+        </div>
+      {% endif %}
+      </td>
+      <td>
+        <div>
+          <span id="files-processed-{{ req.request_id }}">{{ humanize.intcomma(req.files_processed) }}</span> of {{ humanize.intcomma(req.files) }}</div>
+        <div id="files-failed-{{ req.request_id }}">
+          {% if req.files_failed %}({{ req.files_failed }} failed){% endif %}
+        </div>
+      </td>
+      <td id="replicas-{{ req.request_id }}">-</td>
     </tr>
   {% endfor %}
   </tbody>

@@ -2,48 +2,78 @@
 
 {% block content %}
 
-<div>
-  <div class="content-section">
-    <div class="lead">
-      Welcome to ServiceX, {{ session['name'] }}!
+  <div>
+    <div class="content-section">
+      <div class="lead">
+        Welcome to ServiceX, {{ session['name'] }}!
+      </div>
+    </div>
+
+    <div class="content-section">
+      <h4 class="mb-3">Transformation Requests</h4>
+      {% include "requests_table.html" %}
+      {% if not transformation_requests %}
+        {% include "get_started.html" %}
+      {% endif %}
     </div>
   </div>
-
-  <div class="content-section">
-    <h4 class="mb-3">Transformation Requests</h4>
-    {% include "requests_table.html" %}
-    {% if not transformation_requests %}
-      {% include "get_started.html" %}
-    {% endif %}
-  </div>
-</div>
 
 {% endblock %}
 
 {% block scripts %}
   {{ super() }}
   <script>
-      let watched = new Set(
-          {{ transformation_requests | selectattr("incomplete") | map(attribute="request_id") | list | tojson | safe }}
-      );
-      console.log(watched);
+    let watched = new Set(
+      {{ transformation_requests | selectattr("incomplete") | map(attribute="request_id") | list | tojson | safe }}
+    );
+    console.log(watched);
 
-      function update() {
-          Promise.all([...watched].map((req_id) => {
-              return fetch(document.location.origin + `/servicex/transformation/${req_id}/deployment-status`)
-                  .then((resp) => resp.json())
-                  .then((data) => {
-                      console.log(`${req_id} returned`);
-                      console.log(data);
-                      $(`#replicas-${req_id}`).text(data["ready_replicas"]);
-                  });
-          }));
-          setTimeout(update, 10000);
-      }
+    function update_replicas() {
+      Promise.all([...watched].map((req_id) => {
+        return fetch(document.location.origin + `/servicex/transformation/${req_id}/deployment-status`)
+          .then((resp) => resp.json())
+          .then((data) => {
+            console.log(`${req_id} deployment`, data);
+            $(`#replicas-${req_id}`).text(data["replicas"]);
+          });
+      }));
+      setTimeout(update_replicas, 30000);
+    }
 
-      $(document).ready(function () {
-          console.log("Hi");
-          update();
-      })
+    function update_progress() {
+      Promise.all([...watched].map((req_id) => {
+        return fetch(document.location.origin + `/servicex/transformation/${req_id}/status`)
+          .then((resp) => resp.json())
+          .then((data) => {
+            console.log(`${req_id} status`, data);
+            const status = data["status"];
+            const processed = data["files-processed"];
+            const remaining = data["files-remaining"];
+            const failed = data["files-skipped"];
+            const progress = processed / (processed + failed + remaining) * 100;
+
+            $(`#status-${req_id}`).text(status);
+            $(`#files-processed-${req_id}`).text(processed);
+            const progressBar = $(`#progress-bar-${req_id}`)
+            progressBar.text(`${Math.floor(progress)}%`)
+            progressBar.css("width", `${progress}%`);
+            if (failed > 0) {
+              progressBar.addClass("bg-warning");
+              $(`#files-failed-${req_id}`).text(`(${failed} falied)`);
+            }
+            if (status === "Complete" || status === "Fatal") {
+              watched.delete(req_id);
+              $(`#progress-${req_id}`).remove();
+              $(`#replicas-${req_id}`).text("-")
+            }
+          })
+      }));
+      setTimeout(update_progress, 5000);
+    }
+
+    $(document).ready(function () {
+      update_replicas();
+      update_progress();
+    })
   </script>
 {% endblock %}

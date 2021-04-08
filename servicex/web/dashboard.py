@@ -10,6 +10,7 @@ def dashboard():
     page = request.args.get('page', 1, type=int)
     pagination: Pagination = db.session.query(TransformRequest)\
         .filter_by(submitted_by=session["user_id"])\
+        .order_by(TransformRequest.id.desc())\
         .paginate(page=page, per_page=15, error_out=False)
     return render_template(
         "dashboard.html",

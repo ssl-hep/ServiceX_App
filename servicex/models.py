@@ -211,15 +211,21 @@ class TransformRequest(db.Model):
         except NoResultFound:
             return None
 
-    @classmethod
-    def files_remaining(cls, request_id):
-        submitted_request = cls.return_request(request_id)
-        count = TransformationResult.count(request_id)
+    @property
+    def files_remaining(self):
+        return self.files - TransformationResult.count(self.request_id)
 
-        if submitted_request and submitted_request.files:
-            return submitted_request.files - int(count or 0)
-        else:
-            return None
+    @property
+    def files_processed(self):
+        return TransformationResult.query.filter_by(
+            request_id=self.request_id, transform_status="success"
+        ).count()
+
+    @property
+    def files_failed(self):
+        return TransformationResult.query.filter_by(
+            request_id=self.request_id, transform_status="failure"
+        ).count()
 
     @property
     def submitter_name(self):
@@ -235,7 +241,7 @@ class TransformRequest(db.Model):
 
     @property
     def incomplete(self) -> bool:
-        return self.status != "Complete"
+        return self.status not in {"Complete", "Fatal"}
 
     def get_deployment_status(self, transformer_manager: TransformerManager):
         return transformer_manager.get_deployment_status(self.request_id)
