@@ -125,7 +125,19 @@ class SubmitTransformationRequest(ServiceXResource):
                     TransformRequest.OBJECT_STORE_DEST:
                 self.object_store.create_bucket(request_id)
                 # WHat happens if object-store and object_store is None?
-            #if transformation_request['result-destination'] == TransformRequest.VOLUME_DEST:
+            
+            if transformation_request['result-destination'] == TransformRequest.VOLUME_DEST:
+                if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM']==None and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']==None:
+                    #How do you know if there is a persistent volume?
+                    #if 
+                    #Create a PVC 
+                    #where is volume created?
+                elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM']==None:
+                    #like the prior command but instead uses more services
+
+
+
+
             if transformation_request['result-destination'] == TransformRequest.KAFKA_DEST:
                 broker = transformation_request['kafka']['broker']
             else:
