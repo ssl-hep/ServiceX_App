@@ -28,6 +28,7 @@
 
 from unittest.mock import MagicMock
 
+from flask.testing import FlaskClient
 from pytest import fixture
 
 from servicex import create_app
@@ -78,7 +79,7 @@ class ResourceTestBase:
         code_gen_service=MagicMock(CodeGenAdapter),
         lookup_result_processor=MagicMock(LookupResultProcessor),
         docker_repo_adapter=None
-    ):
+    ) -> FlaskClient:
         config = ResourceTestBase._app_config()
         config['TRANSFORMER_MANAGER_ENABLED'] = False
         config['TRANSFORMER_MANAGER_MODE'] = 'external'
@@ -99,7 +100,7 @@ class ResourceTestBase:
         return app.test_client()
 
     @fixture
-    def client(self):
+    def client(self) -> FlaskClient:
         return self._test_client()
 
     @staticmethod
