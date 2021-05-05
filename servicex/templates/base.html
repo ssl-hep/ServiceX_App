@@ -34,7 +34,7 @@
       <div class="collapse navbar-collapse" id="navbarToggle">
         <div class="navbar-nav mr-auto">
           <a class="nav-item nav-link" href="{{ config['DOCS_BASE_URL'] }}">Docs</a>
-        {% if not config['ENABLE_AUTH'] %}
+        {% if not config['ENABLE_AUTH'] or config['DISABLE_USER_MGMT'] %}
           <a href="{{ url_for('global-dashboard') }}" class="nav-item nav-link">Dashboard</a>
         {% endif %}
         </div>
