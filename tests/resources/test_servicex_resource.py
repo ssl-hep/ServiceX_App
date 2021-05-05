@@ -27,15 +27,42 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import pkg_resources
 
+from pytest import fixture
 
-class TestServiceXResource:
+from servicex.resources.servicex_resource import ServiceXResource
+from tests.resource_test_base import ResourceTestBase
+
+
+class TestServiceXResource(ResourceTestBase):
+    module = ServiceXResource.__module__
+
+    @fixture
+    def mock_user(self, mocker):
+        return mocker.patch(f"{self.module}.UserModel.find_by_sub").return_value
+
     def test_get_app_version_no_servicex_app(self, mocker):
         mock_get_distribution = mocker.patch(
-            "servicex.resources.servicex_resource.pkg_resources.get_distribution",
-            side_effect=pkg_resources.DistributionNotFound(None, None))
+            f"{self.module}.pkg_resources.get_distribution",
+            side_effect=pkg_resources.DistributionNotFound(None, None)
+        )
 
-        from servicex.resources.servicex_resource import ServiceXResource
         version = ServiceXResource._get_app_version()
 
         mock_get_distribution.assert_called_with("servicex_app")
         assert version == 'develop'
+
+    def test_get_requesting_user_no_auth(self, client):
+        with client.application.app_context():
+            assert ServiceXResource.get_requesting_user() is None
+
+    def test_get_requesting_user_with_auth(self, mocker, mock_user):
+        mocker.patch(f"{self.module}.get_jwt_identity").return_value = "abcd"
+        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        with client.application.app_context():
+            assert ServiceXResource.get_requesting_user() == mock_user
+
+    def test_get_requesting_user_no_identity(self, mocker):
+        mocker.patch(f"{self.module}.get_jwt_identity").return_value = None
+        client = self._test_client(extra_config={'ENABLE_AUTH': True})
+        with client.application.app_context():
+            assert ServiceXResource.get_requesting_user() is None
