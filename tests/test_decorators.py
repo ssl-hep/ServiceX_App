@@ -175,6 +175,22 @@ class TestDecorators(WebTestBase):
             assert response.status_code == 200
             assert response.json == data
 
+    def test_auth_decorator_integration_user_mgmt_disabled(self, mocker):
+        cfg = {'ENABLE_AUTH': True, 'DISABLE_USER_MGMT': True}
+        client = self._test_client(extra_config=cfg)
+        fake_transform_id = 123
+        data = {'id': fake_transform_id}
+        mock = mocker.patch('servicex.resources.transformation_request'
+                            '.TransformRequest.return_request').return_value
+        mock.to_json.return_value = data
+        with client.application.app_context():
+            response: Response = client.get(
+                f'servicex/transformation/{fake_transform_id}',
+                headers=self.fake_header()
+            )
+            assert response.status_code == 200
+            assert response.json == data
+
     def test_admin_decorator_integration_auth_disabled(self, mocker, client):
         data = {'users': [{'id': 1234}]}
         mocker.patch('servicex.models.UserModel.return_all', return_value=data)
@@ -229,3 +245,13 @@ class TestDecorators(WebTestBase):
             response: Response = client.get('users')
             assert response.status_code == 401
             assert 'restricted' in response.json['message']
+
+    def test_admin_decorator_integration_user_mgmt_disabled(self, mocker):
+        cfg = {'ENABLE_AUTH': True, 'DISABLE_USER_MGMT': True}
+        client = self._test_client(extra_config=cfg)
+        data = {'users': [{'id': 1234}]}
+        mocker.patch('servicex.models.UserModel.return_all', return_value=data)
+        with client.application.app_context():
+            response: Response = client.get('users', headers=self.fake_header())
+            assert response.status_code == 200
+            assert response.json == data
