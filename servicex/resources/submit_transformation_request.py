@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
+import logging
 import sys
 import traceback
 import uuid
@@ -82,6 +83,15 @@ def _workflow_name(transform_request):
 
 
 class SubmitTransformationRequest(ServiceXResource):
+    def __init__(self):
+        """
+        Initialize object
+        """
+        super().__init__()
+        logger = logging.getLogger(__name__)
+        logger.addHandler(logging.NullHandler())
+        self.logger = logger
+
     @classmethod
     def make_api(cls, rabbitmq_adaptor, object_store,
                  code_gen_service, lookup_result_processor, docker_repo_adapter):
@@ -173,7 +183,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     queue=request_id+"_errors")
 
             except Exception as eek:
-                print("Unable to create transformer exchange", eek)
+                self.logger.exception("Unable to create transformer exchange")
                 return {'message': "Error setting up transformer queues"}, 503
 
             request_rec.save_to_db()
@@ -194,6 +204,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 )
                 if parsed_did.scheme not in config['VALID_DID_SCHEMES']:
                     msg = f"DID scheme is not supported: {parsed_did.scheme}"
+                    self.logger.error(f"DID scheme is not supported: {parsed_did.scheme}")
                     return {'message': msg}, 400
 
                 self.rabbitmq_adaptor.basic_publish(exchange='',
@@ -223,16 +234,17 @@ class SubmitTransformationRequest(ServiceXResource):
 
                 db.session.commit()
 
+            self.logger.info(f"Transoformation request submitted with id: {request_id}")
             return {
                 "request_id": str(request_id)
             }
         except BadRequest as bad_request:
+            self.logger.error(f'The json request was malformed: {str(bad_request)}')
             msg = f'The json request was malformed: {str(bad_request)}'
             return {'message': msg}, 400
         except ValueError as eek:
+            self.logger.exception(f"Failed to submit transform request")
             return {'message': f'Failed to submit transform request: {str(eek)}'}, 400
         except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
-            print(exc_value)
+            self.logger.exception("Got exception while submitting transoformation request")
             return {'message': 'Something went wrong'}, 500

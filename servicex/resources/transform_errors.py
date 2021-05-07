@@ -25,18 +25,28 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+import logging
 from servicex.decorators import auth_required
 from servicex.models import TransformRequest, FileStatus
 from servicex.resources.servicex_resource import ServiceXResource
 
 
 class TransformErrors(ServiceXResource):
+    def __init__(self):
+        """
+        Initialize object
+        """
+        super().__init__()
+        logger = logging.getLogger(__name__)
+        logger.addHandler(logging.NullHandler())
+        self.logger = logger
+
     @auth_required
     def get(self, request_id):
         transform = TransformRequest.return_request(request_id)
         if not transform:
             msg = f'Transformation request not found with id: {request_id}'
+            self.logger.error("When looking up errors, " + msg)
             return {'message': msg}, 404
         results = [{
             "pod-name": result[1].pod_name,

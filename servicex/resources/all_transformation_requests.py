@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import logging
 from typing import List
 
 from flask_restful import reqparse
@@ -38,13 +39,24 @@ parser.add_argument('submitted_by', type=int, location='args')
 
 
 class AllTransformationRequests(ServiceXResource):
+    def __init__(self):
+        """
+        Initialize object
+        """
+        super().__init__()
+        logger = logging.getLogger(__name__)
+        logger.addHandler(logging.NullHandler())
+        self.logger = logger
+
     @auth_required
     def get(self):
         args = parser.parse_args()
         query_id = args.get('submitted_by')
         transforms: List[TransformRequest]
         if query_id:
+            self.logger.info(f"Querying transform request by id: {query_id}")
             transforms = TransformRequest.query.filter_by(submitted_by=query_id)
         else:
+            self.logger.info("Querying for all  transform requests")
             transforms = TransformRequest.query.all()
         return TransformRequest.return_json(transforms)

@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import logging
+
 from flask_restful import reqparse
 from servicex.models import db
 from servicex.resources.servicex_resource import ServiceXResource
@@ -43,6 +45,10 @@ class FileTransformationStatus(ServiceXResource):
         self.status_parser.add_argument('pod-name', required=False)
         self.status_parser.add_argument('info', required=False)
 
+        logger = logging.getLogger(__name__)
+        logger.addHandler(logging.NullHandler())
+        self.logger = logger
+
     def post(self, request_id, file_id):
         status = self.status_parser.parse_args()
         print(status)
@@ -55,11 +61,10 @@ class FileTransformationStatus(ServiceXResource):
                                  status=status['status-code'],
                                  info=status.info[:max_string_size])
         file_status.save_to_db()
-
-        print(file_status)
+        self.logger.info(f"Saved file status: {file_status}")
         try:
             db.session.commit()
         except Exception:
-            print("*******Error saving file status record")
+            self.logger.exception("Error saving file status record")
         finally:
             return "Ok"

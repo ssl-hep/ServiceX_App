@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import logging
 import sys
 import traceback
 
@@ -35,6 +36,15 @@ from servicex.resources.servicex_resource import ServiceXResource
 
 
 class AddFileToDataset(ServiceXResource):
+    def __init__(self):
+        """
+        Initialize object
+        """
+        super().__init__()
+        logger = logging.getLogger(__name__)
+        logger.addHandler(logging.NullHandler())
+        self.logger = logger
+
     @classmethod
     def make_api(cls, lookup_result_processor):
         cls.lookup_result_processor = lookup_result_processor
@@ -45,7 +55,7 @@ class AddFileToDataset(ServiceXResource):
             from servicex.models import db
             add_file_request = request.get_json()
             submitted_request = TransformRequest.return_request(request_id)
-
+            self.logger.info(f"Submitted request: {submitted_request} for request id: {request_id}")
             db_record = DatasetFile(request_id=request_id,
                                     file_path=add_file_request['file_path'],
                                     adler32=add_file_request['adler32'],
@@ -55,7 +65,7 @@ class AddFileToDataset(ServiceXResource):
             self.lookup_result_processor.add_file_to_dataset(submitted_request, db_record)
 
             db.session.commit()
-
+            self.logger.info(f"Got file-id: {db_record.id} for request-id:{str(request_id)}")
             return {
                 "request-id": str(request_id),
                 "file-id": db_record.id

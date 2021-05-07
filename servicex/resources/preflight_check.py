@@ -25,6 +25,7 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import logging
 import sys
 import traceback
 
@@ -35,6 +36,15 @@ from servicex.resources.servicex_resource import ServiceXResource
 
 
 class PreflightCheck(ServiceXResource):
+    def __init__(self):
+        """
+        Initialize object
+        """
+        super().__init__()
+        logger = logging.getLogger(__name__)
+        logger.addHandler(logging.NullHandler())
+        self.logger = logger
+
     @classmethod
     def make_api(cls, lookup_result_processor):
         cls.lookup_result_processor = lookup_result_processor
@@ -56,7 +66,5 @@ class PreflightCheck(ServiceXResource):
             }
 
         except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
-            print(exc_value)
+            self.logger.exception("Got exception in pre-flight check")
             return {'message': 'Something went wrong'}, 500

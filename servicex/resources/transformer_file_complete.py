@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import logging
+
 from flask import request, current_app
 
 from servicex.models import TransformRequest, TransformationResult, DatasetFile, db
@@ -32,6 +34,15 @@ from servicex.resources.servicex_resource import ServiceXResource
 
 
 class TransformerFileComplete(ServiceXResource):
+    def __init__(self):
+        """
+        Initialize object
+        """
+        super().__init__()
+        logger = logging.getLogger(__name__)
+        logger.addHandler(logging.NullHandler())
+        self.logger = logger
+
     @classmethod
     def make_api(cls, transformer_manager):
         cls.transformer_manager = transformer_manager
@@ -41,7 +52,9 @@ class TransformerFileComplete(ServiceXResource):
         info = request.get_json()
         submitted_request = TransformRequest.return_request(request_id)
         if submitted_request is None:
-            return {"message": f"Request not found with id: '{request_id}'"}, 404
+            msg = f"Request not found with id: {request_id}"
+            self.logger.error(msg)
+            return {"message": msg}, 404
 
         dataset_file = DatasetFile.get_by_id(info['file-id'])
 
@@ -61,12 +74,12 @@ class TransformerFileComplete(ServiceXResource):
 
         if submitted_request.files_remaining <= 0:
             namespace = current_app.config['TRANSFORMER_NAMESPACE']
-            print("Job is all done... shutting down transformers")
+            self.logger.info("Job is all done... shutting down transformers")
             self.transformer_manager.shutdown_transformer_job(request_id, namespace)
             submitted_request.status = "Complete"
             submitted_request.save_to_db()
 
-        print(info)
+        self.logger.info(info)
         db.session.commit()
 
         return "Ok"
