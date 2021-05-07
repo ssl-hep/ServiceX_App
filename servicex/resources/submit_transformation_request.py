@@ -27,8 +27,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
 import logging
-import sys
-import traceback
 import uuid
 from datetime import datetime, timezone
 
@@ -182,7 +180,7 @@ class SubmitTransformationRequest(ServiceXResource):
                     exchange="transformation_failures",
                     queue=request_id+"_errors")
 
-            except Exception as eek:
+            except Exception:
                 self.logger.exception("Unable to create transformer exchange")
                 return {'message': "Error setting up transformer queues"}, 503
 
@@ -243,7 +241,7 @@ class SubmitTransformationRequest(ServiceXResource):
             msg = f'The json request was malformed: {str(bad_request)}'
             return {'message': msg}, 400
         except ValueError as eek:
-            self.logger.exception(f"Failed to submit transform request")
+            self.logger.exception("Failed to submit transform request")
             return {'message': f'Failed to submit transform request: {str(eek)}'}, 400
         except Exception:
             self.logger.exception("Got exception while submitting transoformation request")

@@ -34,32 +34,32 @@ from servicex.models import db
 
 
 def initialize_logging(request=None):
-  """
-  Get a logger and initialize it so that it outputs the correct format
+    """
+    Get a logger and initialize it so that it outputs the correct format
 
-  :param request: Request id to insert into log messages
-  :return: logger with correct formatting that outputs to console
-  """
-  levels = {
-    'DEBUG': logging.DEBUG,
-    'INFO': logging.INFO,
-    'WARNING': logging.WARNING,
-    'ERROR': logging.ERROR,
-    'CRITICAL': logging.CRITICAL
-  }
+    :param request: Request id to insert into log messages
+    :return: logger with correct formatting that outputs to console
+    """
+    levels = {
+        'DEBUG': logging.DEBUG,
+        'INFO': logging.INFO,
+        'WARNING': logging.WARNING,
+        'ERROR': logging.ERROR,
+        'CRITICAL': logging.CRITICAL
+    }
 
-  log = logging.getLogger()
-  instance = os.environ.get('INSTANCE_NAME', 'Unknown')
-  formatter = logging.Formatter('%(levelname)s ' +
-                                "{} servicex_app N/A ".format(instance) +
-                                '%(message)s')
-  handler = logging.StreamHandler()
-  handler.setFormatter(formatter)
-  level = os.environ.get('LOG_LEVEL', 'INFO')
-  handler.setLevel(levels[level])
-  log.addHandler(handler)
-  log.setLevel(logging.INFO)
-  return log
+    log = logging.getLogger()
+    instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+    formatter = logging.Formatter('%(levelname)s ' +
+                                  "{} servicex_app N/A ".format(instance) +
+                                  '%(message)s')
+    handler = logging.StreamHandler()
+    handler.setFormatter(formatter)
+    level = os.environ.get('LOG_LEVEL', 'INFO')
+    handler.setLevel(levels[level])
+    log.addHandler(handler)
+    log.setLevel(logging.INFO)
+    return log
 
 
 initialize_logging()
