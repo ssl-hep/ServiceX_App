@@ -48,6 +48,7 @@ def initialize_logging(request=None):
         'CRITICAL': logging.CRITICAL
     }
 
+    print("initializing logger")
     log = logging.getLogger()
     instance = os.environ.get('INSTANCE_NAME', 'Unknown')
     formatter = logging.Formatter('%(levelname)s ' +
@@ -56,14 +57,19 @@ def initialize_logging(request=None):
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     level = os.environ.get('LOG_LEVEL', 'INFO')
+    print(f"log level {levels[level]}")
     handler.setLevel(levels[level])
     log.addHandler(handler)
-    log.setLevel(logging.INFO)
+    log.setLevel(levels[level])
     return log
 
 
 initialize_logging()
+logging.info("testing info")
+logging.error("testing error")
 app = servicex.create_app()
+app.logger.info("testing app logging info")
+app.logger.error("testing app logging error")
 db.init_app(app)
 
 migrate = Migrate(app, db)
