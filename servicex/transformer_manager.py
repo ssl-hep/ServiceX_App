@@ -98,9 +98,9 @@ class TransformerManager:
                                 value=current_app.config['MINIO_SECRET_KEY']),
             ]
         
-        #No claim, create a read-write-many PVC:
         if result_destination =='volume':
             if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "": 
+                #Or should this be local storage instead?
                 pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
                     name="default-pvc",
                     namespace=namespace,
@@ -112,14 +112,30 @@ class TransformerManager:
                     resources=client.V1ResourceRequirements(
                     requests={
                         'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
-              }
-            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "":
+              })))
+            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "cephfs":
+                pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
+                    name="ceph-pvc",
+                    namespace=namespace,
+                    annotations=current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'],
+                    #labels=labels,
+                    ),
+                    spec=client.V1PersistentVolumeClaimSpec(
+                    access_modes=['ReadWriteMany'],
+                    resources=client.V1ResourceRequirements(
+                    requests={
+                        'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
+              })
+                    storageClassName= 'cephfs'))
+            
+            
+            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "": 
+                #Raise error
+            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "": 
 
-            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "": #What if claim is not none, but storage class
-            else:
+            
                 
-          )
-      ))
+
 
        provision_new_pvc(pvc)
 
