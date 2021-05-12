@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from datetime import datetime
+
 from pytest import fixture
 
 
@@ -41,6 +43,7 @@ class WebTestBase:
             'SQLALCHEMY_DATABASE_URI': "sqlite:///:memory:",
             'SQLALCHEMY_TRACK_MODIFICATIONS': False,
             'TRANSFORMER_RABBIT_MQ_URL': "amqp://trans.rabbit",
+            'TRANSFORMER_DEFAULT_IMAGE': "sslhep/servicex_func_adl_xaod_transformer:1.0.0-RC.3",
             'TRANSFORMER_NAMESPACE': "my-ws",
             'TRANSFORMER_MANAGER_ENABLED': False,
             'TRANSFORMER_MANAGER_MODE': 'external',
@@ -56,20 +59,20 @@ class WebTestBase:
             'ENABLE_AUTH': False,
             'GLOBUS_CLIENT_ID': 'globus-client-id',
             'GLOBUS_CLIENT_SECRET': 'globus-client-secret',
+            'DID_FINDER_DEFAULT_SCHEME': 'rucio',
+            'VALID_DID_SCHEMES': ['rucio'],
             'JWT_ADMIN': 'admin',
             'JWT_PASS': 'pass',
             'JWT_SECRET_KEY': 'schtum',
         }
 
     @staticmethod
-    def _test_client(mocker, extra_config=None):
+    def _test_client(extra_config=None):
         from servicex import create_app
-        from servicex.rabbit_adaptor import RabbitAdaptor
         config = WebTestBase._app_config()
         if extra_config:
             config.update(extra_config)
-        mock_rabbit_adaptor = mocker.MagicMock(RabbitAdaptor)
-        app = create_app(config, provided_rabbit_adaptor=mock_rabbit_adaptor)
+        app = create_app(config)
         app.test_request_context().push()
         return app.test_client()
 
@@ -147,9 +150,21 @@ class WebTestBase:
             "sub": "primary-oauth-id"
         }
 
+    @staticmethod
+    def _test_transformation_req(**kwargs):
+        from servicex.models import TransformRequest
+        defaults = {
+            "id": 1234,
+            "did": "foo",
+            "request_id": "b5901cca-9858-42e7-a093-0929cf391f0e",
+            "submit_time": datetime.utcnow()
+        }
+        defaults.update(kwargs)
+        return TransformRequest(**defaults)
+
     @fixture
-    def client(self, mocker):
-        with self._test_client(mocker) as client:
+    def client(self):
+        with self._test_client() as client:
             yield client
 
     @fixture

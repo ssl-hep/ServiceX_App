@@ -25,29 +25,33 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import re
 
 
-class ElasticSearchAdapter:
+class DIDParser:
+    # RE to find the first scheme reference and add any remaining ones into the did
+    did_re = re.compile("^(\\w+):\\/\\/(.*$)")
 
-    def __init__(self, url, port, username, password):
-        from elasticsearch import Elasticsearch
-        self.es_monitor = Elasticsearch(
-            hosts=[url + ":" + port],
-            http_auth=(username, password)
-        )
+    def __init__(self, did: str, default_scheme: str = 'rucio'):
+        """
+        Parse the did and extract the scheme. If no scheme is found, default to the
+        provided one
+        :param did: Full DID which may contain a scheme
+        :param default_scheme: Use this if no scheme provided
+        """
+        match = self.did_re.match(did)
+        if match:
+            self.scheme = match.group(1)
+            self.did = match.group(2)
+        else:
+            self.scheme = default_scheme
+            self.did = did
 
-    def create_update_request(self, req_id, state):
-        res = self.es_monitor.index(
-            index="servicex",
-            id=req_id,
-            body=state
-        )
-        print('request update:', res['result'])
-
-    def create_update_path(self, path_id, state):
-        res = self.es_monitor.index(
-            index="servicex_paths",
-            id=path_id,
-            body=state
-        )
-        print('path update:', res['result'])
+    @property
+    def microservice_queue(self) -> str:
+        """
+        Construct the name of the rabbit queue that will feed the did finder based
+        on the scheme name
+        :return: queue name
+        """
+        return f"{self.scheme}_did_requests"

@@ -27,9 +27,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
-import time
-
-import pika
 from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_jwt_extended import (JWTManager)
@@ -37,7 +34,6 @@ from flask_restful import Api
 
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
-from servicex.elasticsearch_adaptor import ElasticSearchAdapter
 from servicex.lookup_result_processor import LookupResultProcessor
 from servicex.object_store_manager import ObjectStoreManager
 from servicex.rabbit_adaptor import RabbitAdaptor
@@ -45,39 +41,10 @@ from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 
 
-def _init_rabbit_mq(rabbitmq_url, retries, retry_interval):
-    rabbit_mq_adaptor = None
-    retry_count = 0
-    while not rabbit_mq_adaptor:
-        try:
-            rabbit_mq_adaptor = RabbitAdaptor(rabbitmq_url)
-            rabbit_mq_adaptor.connect()
-
-            # Insure the required queues and exchange exist in RabbitMQ broker
-            rabbit_mq_adaptor.setup_queue('did_requests')
-            rabbit_mq_adaptor.setup_queue('validation_requests')
-            rabbit_mq_adaptor.setup_exchange('transformation_requests')
-            rabbit_mq_adaptor.setup_exchange('transformation_failures')
-
-        except pika.exceptions.AMQPConnectionError as eek:
-            rabbit_mq_adaptor = None
-            retry_count += 1
-            if retry_count < retries:
-                print("Failed to connect to RabbitMQ. Waiting before trying again")
-                time.sleep(retry_interval)
-            else:
-                print("Failed to connect to RabbitMQ. Giving Up")
-                raise eek
-
-    print("Connection to RabbitMQ Adaptor Up")
-    return rabbit_mq_adaptor
-
-
 def create_app(test_config=None,
                provided_transformer_manager=None,
                provided_rabbit_adaptor=None,
                provided_object_store=None,
-               provided_elasticsearch_adapter=None,
                provided_code_gen_service=None,
                provided_lookup_result_processor=None,
                provided_docker_repo_adapter=None):
@@ -93,6 +60,9 @@ def create_app(test_config=None,
         print("Transformer enabled: ", test_config['TRANSFORMER_MANAGER_ENABLED'])
 
     with app.app_context():
+        # Validate did-finder scheme
+        if app.config['DID_FINDER_DEFAULT_SCHEME'] not in app.config['VALID_DID_SCHEMES']:
+            raise ValueError(f"Default DID Finder Scheme not listed in {app.config['VALID_DID_SCHEMES']}") # NOQA E501
 
         if app.config['OBJECT_STORE_ENABLED']:
             if not provided_object_store:
@@ -110,9 +80,7 @@ def create_app(test_config=None,
             transformer_manager = provided_transformer_manager
 
         if not provided_rabbit_adaptor:
-            rabbit_adaptor = _init_rabbit_mq(app.config['RABBIT_MQ_URL'],
-                                             app.config['RABBIT_RETRIES'],
-                                             app.config['RABBIT_RETRY_INTERVAL'])
+            rabbit_adaptor = RabbitAdaptor(app.config['RABBIT_MQ_URL'])
         else:
             rabbit_adaptor = provided_rabbit_adaptor
 
@@ -123,21 +91,8 @@ def create_app(test_config=None,
         else:
             code_gen_service = provided_code_gen_service
 
-        if 'ELASTIC_SEARCH_LOGGING_ENABLED' in app.config \
-                and app.config['ELASTIC_SEARCH_LOGGING_ENABLED']\
-                and not provided_elasticsearch_adapter:
-            elasticsearch_adaptor = ElasticSearchAdapter(
-                app.config['ES_HOST'],
-                app.config['ES_PORT'],
-                app.config['ES_USER'],
-                app.config['ES_PASS']
-            )
-        else:
-            elasticsearch_adaptor = provided_elasticsearch_adapter
-
         if not provided_lookup_result_processor:
             lookup_result_processor = LookupResultProcessor(rabbit_adaptor,
-                                                            elasticsearch_adaptor,
                                                             "http://" +
                                                             app.config[
                                                                 'ADVERTISED_HOSTNAME'] + "/"
@@ -164,8 +119,14 @@ def create_app(test_config=None,
             db.init_app(app)
             db.create_all()
 
-        add_routes(api, transformer_manager, rabbit_adaptor, object_store,
-                   elasticsearch_adaptor, code_gen_service, lookup_result_processor,
-                   docker_repo_adapter)
+        add_routes(api, transformer_manager, rabbit_adaptor, object_store, code_gen_service,
+                   lookup_result_processor, docker_repo_adapter)
+
+        # Inject useful Python modules to make them available in all templates
+        @app.context_processor
+        def inject_modules():
+            import humanize
+            import datetime
+            return dict(datetime=datetime, humanize=humanize)
 
     return app
