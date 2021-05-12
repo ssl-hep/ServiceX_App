@@ -29,7 +29,7 @@ from flask import current_app as app
 
 
 def add_routes(api, transformer_manager, rabbit_mq_adaptor,
-               object_store, elasticsearch_adapter, code_gen_service,
+               object_store, code_gen_service,
                lookup_result_processor, docker_repo_adapter):
     from servicex.resources.submit_transformation_request import SubmitTransformationRequest
     from servicex.resources.transform_start import TransformStart
@@ -44,6 +44,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.transformer_file_complete import TransformerFileComplete
     from servicex.resources.transform_errors import TransformErrors
     from servicex.resources.info import Info
+    from servicex.resources.deployment_status import DeploymentStatus
 
     from servicex.resources.users.all_users import AllUsers
     from servicex.resources.users.token_refresh import TokenRefresh
@@ -52,31 +53,46 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.users.pending_users import PendingUsers
     from servicex.resources.users.slack_interaction import SlackInteraction
 
-    from servicex.web import home, sign_in, sign_out, auth_callback, \
-        view_profile, edit_profile, api_token, servicex_file
+    from servicex.web.home import home
+    from servicex.web.sign_in import sign_in
+    from servicex.web.sign_out import sign_out
+    from servicex.web.auth_callback import auth_callback
+    from servicex.web.user_dashboard import user_dashboard
+    from servicex.web.global_dashboard import global_dashboard
+    from servicex.web.view_profile import view_profile
+    from servicex.web.edit_profile import edit_profile
+    from servicex.web.api_token import api_token
+    from servicex.web.servicex_file import servicex_file
+    from servicex.web.transformation_request import transformation_request
 
     # Must be its own module to allow patching
     from servicex.web.create_profile import create_profile
 
     SubmitTransformationRequest.make_api(rabbitmq_adaptor=rabbit_mq_adaptor,
                                          object_store=object_store,
-                                         elasticsearch_adapter=elasticsearch_adapter,
                                          code_gen_service=code_gen_service,
                                          lookup_result_processor=lookup_result_processor,
                                          docker_repo_adapter=docker_repo_adapter)
 
     # Web Frontend Routes
     app.add_url_rule('/', 'home', home)
+    app.add_url_rule('/global-dashboard', 'global-dashboard', global_dashboard)
     app.add_url_rule('/sign-in', 'sign_in', sign_in)
     app.add_url_rule('/sign-out', 'sign_out', sign_out)
     app.add_url_rule('/auth-callback', 'auth_callback', auth_callback)
     app.add_url_rule('/api-token', 'api_token', api_token)
     app.add_url_rule('/.servicex', 'servicex-file', servicex_file)
+    app.add_url_rule('/dashboard', 'user-dashboard', user_dashboard)
     app.add_url_rule('/profile', 'profile', view_profile)
     app.add_url_rule('/profile/new', 'create_profile', create_profile,
                      methods=['GET', 'POST'])
     app.add_url_rule('/profile/edit', 'edit_profile', edit_profile,
                      methods=['GET', 'POST'])
+    app.add_url_rule(
+        '/transformation-request/<id_>',
+        'transformation_request',
+        transformation_request
+    )
 
     # User management and Authentication Endpoints
     api.add_resource(TokenRefresh, '/token/refresh')
@@ -88,23 +104,20 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
 
     # Client public endpoints
     api.add_resource(Info, '/servicex')
-    api.add_resource(SubmitTransformationRequest, '/servicex/transformation')
-
-    api.add_resource(AllTransformationRequests, '/servicex/transformation')
-    api.add_resource(TransformationRequest,
-                     '/servicex/transformation/<string:request_id>')
-
-    api.add_resource(TransformationStatus,
-                     '/servicex/transformation/<string:request_id>/status')
-
-    api.add_resource(TransformErrors,
-                     '/servicex/transformation/<string:request_id>/errors')
+    prefix = "/servicex/transformation"
+    api.add_resource(SubmitTransformationRequest, prefix)
+    api.add_resource(AllTransformationRequests, prefix)
+    prefix += "/<string:request_id>"
+    api.add_resource(TransformationRequest, prefix)
+    api.add_resource(TransformationStatus, prefix + "/status")
+    api.add_resource(TransformErrors, prefix + "/errors")
+    api.add_resource(DeploymentStatus, prefix + "/deployment-status")
 
     # Internal service endpoints
     api.add_resource(TransformationStatusInternal,
                      '/servicex/internal/transformation/<string:request_id>/status')
 
-    AddFileToDataset.make_api(lookup_result_processor, elasticsearch_adapter)
+    AddFileToDataset.make_api(lookup_result_processor)
     api.add_resource(AddFileToDataset,
                      '/servicex/internal/transformation/<string:request_id>/files')
 
@@ -123,6 +136,6 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     api.add_resource(FileTransformationStatus,
                      '/servicex/internal/transformation/<string:request_id>/<int:file_id>/status')
 
-    TransformerFileComplete.make_api(transformer_manager, elasticsearch_adapter)
+    TransformerFileComplete.make_api(transformer_manager)
     api.add_resource(TransformerFileComplete,
                      '/servicex/internal/transformation/<string:request_id>/file-complete')

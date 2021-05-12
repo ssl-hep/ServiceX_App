@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import base64
+from typing import Optional
 
 import kubernetes
 from kubernetes import client
@@ -87,6 +88,13 @@ class TransformerManager:
         env_var_pod_name = client.V1EnvVar("POD_NAME", value_from=pod_name_value_from)
 
         env = env + [env_var_pod_name]
+
+        # Provide each pod with an environment var holding that instance name
+        if "INSTANCE_NAME" in current_app.config:
+            instance_name = current_app.config['INSTANCE_NAME']
+            env_var_instance_name = client.V1EnvVar("INSTANCE_NAME",
+                                                    value=instance_name)
+            env = env + [env_var_instance_name]
 
         if result_destination == 'object-store':
             env = env + [
@@ -168,7 +176,10 @@ class TransformerManager:
             })
 
         # If we are using Autoscaler then always start with one replica
-        replicas = 1 if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED'] else workers
+        if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED']:
+            replicas = current_app.config.get('TRANSFORMER_MIN_REPLICAS', 1)
+        else:
+            replicas = workers
         spec = client.V1DeploymentSpec(
             template=template,
             selector=selector,
@@ -185,24 +196,25 @@ class TransformerManager:
         return deployment
 
     @staticmethod
-    def create_hpa_object(request_id, workers):
+    def create_hpa_object(request_id):
         target = client.V1CrossVersionObjectReference(
             api_version="apps/v1",
             kind='Deployment',
             name="transformer-" + request_id
         )
 
+        cfg = current_app.config
+        spec = client.V1HorizontalPodAutoscalerSpec(
+            scale_target_ref=target,
+            target_cpu_utilization_percentage=cfg["TRANSFORMER_CPU_SCALE_THRESHOLD"],
+            min_replicas=cfg["TRANSFORMER_MIN_REPLICAS"],
+            max_replicas=cfg["TRANSFORMER_MAX_REPLICAS"]
+        )
         hpa = client.V1HorizontalPodAutoscaler(
             api_version="autoscaling/v1",
             kind='HorizontalPodAutoscaler',
             metadata=client.V1ObjectMeta(name="transformer-" + request_id),
-            spec=client.V1HorizontalPodAutoscalerSpec(
-                max_replicas=workers,
-                scale_target_ref=target,
-                target_cpu_utilization_percentage=current_app.config[
-                    'TRANSFORMER_CPU_SCALE_THRESHOLD'
-                    ]
-            )
+            spec=spec
         )
 
         return hpa
@@ -237,7 +249,7 @@ class TransformerManager:
 
         if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED']:
             autoscaler_api = kubernetes.client.AutoscalingV1Api()
-            hpa = self.create_hpa_object(request_id, workers)
+            hpa = self.create_hpa_object(request_id)
             self._create_hpa(autoscaler_api, hpa, namespace)
 
     @staticmethod
@@ -254,6 +266,26 @@ class TransformerManager:
             name="transformer-" + request_id,
             namespace=namespace
         )
+
+        api_core = client.CoreV1Api()
+        configmap_name = "{}-generated-source".format(request_id)
+        api_core.delete_namespaced_config_map(name=configmap_name,
+                                              namespace=namespace)
+
+    @staticmethod
+    def get_deployment_status(
+        request_id: str
+    ) -> Optional[kubernetes.client.models.v1_deployment_status.V1DeploymentStatus]:
+        namespace = current_app.config["TRANSFORMER_NAMESPACE"]
+        api = client.AppsV1Api()
+        selector = f"metadata.name=transformer-{request_id}"
+        # selector = f"metadata.name=aeckart-servicex-app"
+        results: kubernetes.client.AppsV1beta1DeploymentList
+        results = api.list_namespaced_deployment(namespace, field_selector=selector)
+        if not results.items:
+            return None
+        deployment: kubernetes.client.AppsV1beta1Deployment = results.items[0]
+        return deployment.status
 
     @staticmethod
     def create_configmap_from_zip(zipfile, request_id, namespace):
