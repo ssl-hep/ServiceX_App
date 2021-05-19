@@ -107,21 +107,22 @@ class TransformerManager:
             ]
         
         if result_destination =='volume':
-            if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "": 
-                #Or should this be local storage instead?
-                pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
-                    name="default-pvc",
-                    namespace=namespace,
-                    annotations=current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'],
-                    #labels=labels,
-                    ),
-                    spec=client.V1PersistentVolumeClaimSpec(
-                    access_modes=['ReadWriteMany'],
-                    resources=client.V1ResourceRequirements(
-                    requests={
-                        'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
-              })))
-            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "cephfs":
+            # if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "": 
+            #     #Or should this be local storage instead?
+            #     pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
+            #         name="default-pvc",
+            #         namespace=namespace,
+            #         annotations=current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'],
+            #         #labels=labels,
+            #         ),
+            #         spec=client.V1PersistentVolumeClaimSpec(
+            #         access_modes=['ReadWriteMany'],
+            #         resources=client.V1ResourceRequirements(
+            #         requests={
+            #             'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
+            #   })))
+            # elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "cephfs":
+            if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "cephfs":
                 pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
                     name="ceph-pvc",
                     namespace=namespace,
@@ -130,26 +131,33 @@ class TransformerManager:
                     ),
                     spec=client.V1PersistentVolumeClaimSpec(
                     access_modes=['ReadWriteMany'],
+                    storage_class_name='rook-cephfs',
+                    #storage_class_name='cephfs',
                     resources=client.V1ResourceRequirements(
                     requests={
                         'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
-              })
-                    storageClassName= 'cephfs'))
-            
-            
-            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "": 
-                #Raise error
-            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "": 
+                    })))
+                volumes.append(pvc)
 
             
-                
-
-
-       provision_new_pvc(pvc)
-
-
-                
-
+    #         elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "rook-ceph":
+    #             pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
+    #                 name="rook-ceph-pvc",
+    #                 namespace=namespace,
+    #                 annotations=current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'],
+    #                 #labels=labels,
+    #                 ),
+    #                 spec=client.V1PersistentVolumeClaimSpec(
+    #                 access_modes=['ReadWriteOne'],
+    #                 resources=client.V1ResourceRequirements(
+    #                 requests={
+    #                     'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
+    #           })
+    #                 storageClassName= 'rook-ceph-block'))            
+    #         elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "": 
+    #             #Raise error
+    #         elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "": 
+    #    provision_new_pvc(pvc)
         python_args = ["/servicex/proxy-exporter.sh & sleep 5 && " +
                        "PYTHONPATH=/generated:$PYTHONPATH " +
                        "python /servicex/transformer.py " +
