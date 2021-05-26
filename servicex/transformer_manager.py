@@ -105,9 +105,9 @@ class TransformerManager:
                 client.V1EnvVar(name='MINIO_SECRET_KEY',
                                 value=current_app.config['MINIO_SECRET_KEY']),
             ]
-        
         if result_destination =='volume':
-            # if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "": 
+            if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "": 
+                pass #[PLACEHOLDER]
             #     #Or should this be local storage instead?
             #     pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
             #         name="default-pvc",
@@ -121,43 +121,43 @@ class TransformerManager:
             #         requests={
             #             'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
             #   })))
-            # elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "cephfs":
-            if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "cephfs":
+            #agnostic to storage class
+            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']!="":
+                # Need to work on later
                 pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
-                    name="ceph-pvc",
+                    name="zora-pvc", #add request id
                     namespace=namespace,
                     annotations=current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'],
                     #labels=labels,
                     ),
                     spec=client.V1PersistentVolumeClaimSpec(
                     access_modes=['ReadWriteMany'],
-                    storage_class_name='rook-cephfs',
-                    #storage_class_name='cephfs',
+                    #storage_class_name='rook-cephfs',
+                    storage_class_name=current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'],
                     resources=client.V1ResourceRequirements(
                     requests={
                         'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
                     })))
-                volumes.append(pvc)
 
+                #need to fix 
+                volume_mounts.append(
+                client.V1VolumeMount(mount_path=current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR'], name='ceph-pvc'))
+
+            # elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "": 
             
-    #         elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "rook-ceph":
-    #             pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
-    #                 name="rook-ceph-pvc",
-    #                 namespace=namespace,
-    #                 annotations=current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'],
-    #                 #labels=labels,
-    #                 ),
-    #                 spec=client.V1PersistentVolumeClaimSpec(
-    #                 access_modes=['ReadWriteOne'],
-    #                 resources=client.V1ResourceRequirements(
-    #                 requests={
-    #                     'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
-    #           })
-    #                 storageClassName= 'rook-ceph-block'))            
-    #         elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "": 
-    #             #Raise error
-    #         elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "": 
-    #    provision_new_pvc(pvc)
+            #    Raise error; unsupported storage class
+            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "": 
+                pvc = client.V1Volume(
+                name='posix-volume',
+                persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name=current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'])
+            
+                volumes.append(pvc)
+                volume_mounts.append(
+                client.V1VolumeMount(mount_path="/posix_volume", name=current_app.config['TRANSFORMER_PERSISTENCE_CLAIM']))
+                #client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume')
+
+               #current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR']
+        #invoke uproot transformer (pass in something for the if statement )
         python_args = ["/servicex/proxy-exporter.sh & sleep 5 && " +
                        "PYTHONPATH=/generated:$PYTHONPATH " +
                        "python /servicex/transformer.py " +
@@ -165,7 +165,9 @@ class TransformerManager:
                        " --rabbit-uri " + rabbitmq_uri +
                        " --chunks " + str(chunk_size) +
                        " --result-destination " + result_destination +
-                       " --result-format " + result_format]
+                       " --result-format " + result_format +
+                       " --subdir " + current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR']
+                       ]
 
         if kafka_broker:
             python_args[0] += " --brokerlist "+kafka_broker
