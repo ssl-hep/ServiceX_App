@@ -125,9 +125,11 @@ class SubmitTransformationRequest(ServiceXResource):
                 #   validation
                 #   persistence agrees w volume option 
                 if config['TRANSFORMER_PERSISTENCE_CLAIM']==None and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']==None:
+                    pass
                 # 
                 #
                 elif config['TRANSFORMER_PERSISTENCE_CLAIM']==None:
+                    pass
                 #
                 #
 
