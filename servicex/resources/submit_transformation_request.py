@@ -119,8 +119,6 @@ class SubmitTransformationRequest(ServiceXResource):
 
             #hard-coding
             args['result-destination'] = TransformRequest.VOLUME_DEST
-
-
             if args['result-destination'] == TransformRequest.VOLUME_DEST:
                 #   validation
                 #   persistence agrees w volume option 
