@@ -119,17 +119,13 @@ class SubmitTransformationRequest(ServiceXResource):
 
             #hard-coding
             args['result-destination'] = TransformRequest.VOLUME_DEST
-            if args['result-destination'] == TransformRequest.VOLUME_DEST:
-                #   validation
-                #   persistence agrees w volume option 
-                if config['TRANSFORMER_PERSISTENCE_CLAIM']==None and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']==None:
-                    pass
-                # 
-                #
-                elif config['TRANSFORMER_PERSISTENCE_CLAIM']==None:
-                    pass
-                #
-                #
+            # if args['result-destination'] == TransformRequest.VOLUME_DEST:
+            #     #   validation
+            #     #   persistence agrees w volume option 
+            #     if config['TRANSFORMER_PERSISTENCE_CLAIM']==None and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']==None:
+            #         pass
+            #     elif config['TRANSFORMER_PERSISTENCE_CLAIM']==None:
+            #         pass
 
 
 
