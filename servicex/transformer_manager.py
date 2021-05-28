@@ -105,6 +105,7 @@ class TransformerManager:
                 client.V1EnvVar(name='MINIO_SECRET_KEY',
                                 value=current_app.config['MINIO_SECRET_KEY']),
             ]
+        print(current_app.config['TRANSFORMER_DEFAULT_IMAGE'])
         if result_destination =='volume':
             if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "": 
                 pass #[PLACEHOLDER]
