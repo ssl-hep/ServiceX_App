@@ -59,6 +59,8 @@ def create_app(test_config=None,
         app.config.from_mapping(test_config)
         print("Transformer enabled: ", test_config['TRANSFORMER_MANAGER_ENABLED'])
 
+    print(app.config)
+
     with app.app_context():
         # Validate did-finder scheme
         if app.config['DID_FINDER_DEFAULT_SCHEME'] not in app.config['VALID_DID_SCHEMES']:
