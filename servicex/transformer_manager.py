@@ -32,6 +32,8 @@ import kubernetes
 from kubernetes import client
 from flask import current_app
 
+import os
+
 
 class TransformerManager:
 
@@ -107,6 +109,7 @@ class TransformerManager:
                                 value=current_app.config['MINIO_SECRET_KEY']),
             ]
         print(current_app.config['TRANSFORMER_DEFAULT_IMAGE'])
+        print(os.environ)
         if result_destination =='volume':
             if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "": 
                 pass #[PLACEHOLDER]
