@@ -117,11 +117,11 @@ class TransformerManager:
                     annotation = current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']
                 else:
                     annotation = None
-                pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
+                claim = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
                     name="pvc"+request_id,
                     namespace=namespace,
                     annotations=annotation,
-                    #labels=labels,
+                    labels=None
                     ),
                     spec=client.V1PersistentVolumeClaimSpec(
                     access_modes=['ReadWriteMany'],
@@ -131,7 +131,7 @@ class TransformerManager:
                         'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
                     })))
                 api_core = client.CoreV1Api()
-                api_core.create_namespaced_persistent_volume_claim(namespace,pvc)
+                api_core.create_namespaced_persistent_volume_claim(namespace=namespace,body=claim)
                 
                 pvc = client.V1Volume(
                 name='posix-volume',
