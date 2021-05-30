@@ -48,7 +48,7 @@ class TransformerManager:
     @staticmethod
     def create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
                           result_destination, result_format, x509_secret, kafka_broker,
-                          generated_code_cm):
+                          generated_code_cm,namespace):
         volume_mounts = [
             client.V1VolumeMount(
                 name='x509-secret',
@@ -134,8 +134,7 @@ class TransformerManager:
                 name='posix-volume',
                 persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name="pvc"+request_id))
                 volume_mounts.append(
-                # client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
-                client.V1VolumeMount(mount_path="/posix_test", name='posix-volume'))
+                client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
             elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "": 
                 pvc = client.V1Volume(
                 name='posix-volume',
@@ -255,7 +254,7 @@ class TransformerManager:
         api_v1 = client.AppsV1Api()
         job = self.create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
                                      result_destination, result_format,
-                                     x509_secret, kafka_broker, generated_code_cm)
+                                     x509_secret, kafka_broker, generated_code_cm,namespace)
 
         self._create_job(api_v1, job, namespace)
 
