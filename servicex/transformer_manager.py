@@ -107,29 +107,15 @@ class TransformerManager:
                 client.V1EnvVar(name='MINIO_SECRET_KEY',
                                 value=current_app.config['MINIO_SECRET_KEY']),
             ]
-        print(current_app.config['TRANSFORMER_DEFAULT_IMAGE'])
-        print(os.environ)
+
         if result_destination =='volume':
             if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "": 
-                pass #[PLACEHOLDER]
-            #     #Or should this be local storage instead?
-            #     pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
-            #         name="default-pvc",
-            #         namespace=namespace,
-            #         annotations=current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'],
-            #         #labels=labels,
-            #         ),
-            #         spec=client.V1PersistentVolumeClaimSpec(
-            #         access_modes=['ReadWriteMany'],
-            #         resources=client.V1ResourceRequirements(
-            #         requests={
-            #             'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
-            #   })))
-            #agnostic to storage class
+                pass 
+            #     #be local storage instead?
+
             elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']!="":
-                # Need to work on later
                 pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
-                    name="zora-pvc", #add request id
+                    name="pvc"+request_id,
                     namespace=namespace,
                     annotations=current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'],
                     #labels=labels,
@@ -142,13 +128,14 @@ class TransformerManager:
                     requests={
                         'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
                     })))
-
-                #need to fix 
+                api_core = client.CoreV1Api()
+                api_core.create_namespaced_persistent_volume_claim(namespace,pvc)
+                
+                pvc = client.V1Volume(
+                name='posix-volume',
+                persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name="pvc"+request_id))
                 volume_mounts.append(
-                client.V1VolumeMount(mount_path=current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR'], name='ceph-pvc'))
-
-            # elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "": 
-            #    Raise error; unsupported storage class
+                client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
             elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "": 
                 pvc = client.V1Volume(
                 name='posix-volume',
@@ -156,10 +143,7 @@ class TransformerManager:
                 volumes.append(pvc)
                 volume_mounts.append(
                 client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
-                #client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume')
 
-               #current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR']
-        #invoke uproot transformer (pass in something for the if statement )
         python_args = ["/servicex/proxy-exporter.sh & sleep 5 && " +
                        "PYTHONPATH=/generated:$PYTHONPATH " +
                        "python /servicex/transformer.py " +
