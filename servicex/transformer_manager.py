@@ -117,11 +117,12 @@ class TransformerManager:
                     annotation = current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']
                 else:
                     annotation = None
+                #hypothesis; kubenetes don't like None
                 claim = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
                     name="pvc"+request_id,
-                    namespace=namespace,
-                    annotations=annotation,
-                    labels=None
+                    namespace=namespace
+                    # annotations=annotation,
+                    # labels=None
                     ),
                     spec=client.V1PersistentVolumeClaimSpec(
                     access_modes=['ReadWriteMany'],

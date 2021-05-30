@@ -118,8 +118,8 @@ class SubmitTransformationRequest(ServiceXResource):
 
 
             #hard-coding for PV
-            print(args['result-destination'])
-            args['result-destination'] = TransformRequest.VOLUME_DEST
+            # print(args['result-destination'])
+            # args['result-destination'] = TransformRequest.VOLUME_DEST
             # if args['result-destination'] == TransformRequest.VOLUME_DEST:
             # if config['TRANSFORMER_PERSISTENCE_CLAIM']==None and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']==None:
             # #         pass
