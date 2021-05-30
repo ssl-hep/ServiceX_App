@@ -108,48 +108,73 @@ class TransformerManager:
                 client.V1EnvVar(name='MINIO_SECRET_KEY',
                                 value=current_app.config['MINIO_SECRET_KEY']),
             ]
-        print(current_app.config['TRANSFORMER_DEFAULT_IMAGE'])
-        print(os.environ)
+
         if result_destination =='volume':
             if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "": 
-                pass #[PLACEHOLDER]
-            #     #Or should this be local storage instead?
-            #     pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
-            #         name="default-pvc",
-            #         namespace=namespace,
-            #         annotations=current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'],
-            #         #labels=labels,
-            #         ),
-            #         spec=client.V1PersistentVolumeClaimSpec(
-            #         access_modes=['ReadWriteMany'],
-            #         resources=client.V1ResourceRequirements(
-            #         requests={
-            #             'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
-            #   })))
-            #agnostic to storage class
+            #     WIP 
+                pass 
+            #     #be local storage instead?
             elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']!="":
-                # Need to work on later
+                # from __future__ import print_function
+                # import time
+                # import kubernetes.client
+                # from kubernetes.client.rest import ApiException
+                # from pprint import pprint
+                # configuration = kubernetes.client.Configuration()
+                # # Configure API key authorization: BearerToken
+                # configuration.api_key['authorization'] = 'YOUR_API_KEY'
+                # # Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+                # # configuration.api_key_prefix['authorization'] = 'Bearer'
+
+                # # Defining host is optional and default to http://localhost
+                # configuration.host = "http://localhost"
+
+                # Enter a context with an instance of the API kubernetes.client
+                # with kubernetes.client.ApiClient(configuration) as api_client:
+                #     # Create an instance of the API class
+                #     api_instance = kubernetes.client.CoreV1Api(api_client)
+                #     namespace = 'zora' # str | object name and auth scope, such as for teams and projects
+                # body = kubernetes.client.V1PersistentVolumeClaim() # V1PersistentVolumeClaim | 
+                # # pretty = 'pretty_example' # str | If 'true', then the output is pretty printed. (optional)
+                # # dry_run = 'dry_run_example' # str | When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed (optional)
+                # # field_manager = 'field_manager_example' # str | fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. (optional)
+
+                # try:
+                #     api_response = api_instance.create_namespaced_persistent_volume_claim(namespace, body)
+                #     pprint(api_response)
+                # except ApiException as e:
+                #     print("Exception when calling CoreV1Api->create_namespaced_persistent_volume_claim: %s\n" % e)
+                if current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']!="":
+                    annotation = current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']
+                else:
+                    annotation = None
+                #hypothesis; kubenetes don't like None?
+                # pvc = client.V1PersistentVolumeClaim() this seems to work!!
                 pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
-                    name="zora-pvc", #add request id
-                    namespace=namespace,
-                    annotations=current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'],
-                    #labels=labels,
+                    name="pvc"+request_id,
+                    namespace=namespace
+                    # annotations=annotation,
+                    # labels=None
                     ),
                     spec=client.V1PersistentVolumeClaimSpec(
-                    access_modes=['ReadWriteMany'],
-                    #storage_class_name='rook-cephfs',
-                    storage_class_name=current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'],
-                    resources=client.V1ResourceRequirements(
-                    requests={
-                        'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
-                    })))
-
-                #need to fix 
+                        access_modes=['ReadWriteMany'],
+                        storage_class_name=current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'],
+                        resources=client.V1ResourceRequirements(
+                            requests={
+                            'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
+                            })
+                        )
+                    )
+                api_core = client.CoreV1Api()
+                api_core.create_namespaced_persistent_volume_claim(namespace,pvc)
+                print("success?")
+                pvc = client.V1Volume(
+                name='posix-volume',
+                persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name="pvc"+request_id))
+                volumes.append(pvc)
                 volume_mounts.append(
-                client.V1VolumeMount(mount_path=current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR'], name='ceph-pvc'))
-
-            # elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "": 
-            #    Raise error; unsupported storage class
+                client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
+    
             elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "": 
                 pvc = client.V1Volume(
                 name='posix-volume',
@@ -157,10 +182,7 @@ class TransformerManager:
                 volumes.append(pvc)
                 volume_mounts.append(
                 client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
-                #client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume')
 
-               #current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR']
-        #invoke uproot transformer (pass in something for the if statement )
         python_args = ["/servicex/proxy-exporter.sh & sleep 5 && " +
                        "PYTHONPATH=/generated:$PYTHONPATH " +
                        "python /servicex/transformer.py " +
@@ -272,7 +294,7 @@ class TransformerManager:
         api_v1 = client.AppsV1Api()
         job = self.create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
                                      result_destination, result_format,
-                                     x509_secret, kafka_broker, generated_code_cm)
+                                     x509_secret, kafka_broker, generated_code_cm,namespace)
 
         self._create_job(api_v1, job, namespace)
 
