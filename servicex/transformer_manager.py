@@ -132,6 +132,7 @@ class TransformerManager:
                         'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
                     })))
                 api_core = client.CoreV1Api()
+                print(namespace)
                 api_core.create_namespaced_persistent_volume_claim(namespace=namespace,body=claim)
                 
                 pvc = client.V1Volume(
