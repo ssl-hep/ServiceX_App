@@ -149,7 +149,6 @@ class TransformerManager:
                 client.V1VolumeMount(mount_path=current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR'], name='ceph-pvc'))
 
             # elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "": 
-            
             #    Raise error; unsupported storage class
             elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "": 
                 pvc = client.V1Volume(
@@ -157,7 +156,7 @@ class TransformerManager:
                 persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name=current_app.config['TRANSFORMER_PERSISTENCE_CLAIM']))
                 volumes.append(pvc)
                 volume_mounts.append(
-                client.V1VolumeMount(mount_path="/posix_volume", name=current_app.config['TRANSFORMER_PERSISTENCE_CLAIM']))
+                client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
                 #client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume')
 
                #current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR']
