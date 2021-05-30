@@ -112,7 +112,6 @@ class TransformerManager:
             if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "": 
                 pass 
             #     #be local storage instead?
-
             elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']!="":
                 pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
                     name="pvc"+request_id,
@@ -135,7 +134,8 @@ class TransformerManager:
                 name='posix-volume',
                 persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name="pvc"+request_id))
                 volume_mounts.append(
-                client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
+                # client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
+                client.V1VolumeMount(mount_path="/posix_test", name='posix-volume'))
             elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "": 
                 pvc = client.V1Volume(
                 name='posix-volume',
