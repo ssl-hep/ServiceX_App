@@ -113,15 +113,18 @@ class TransformerManager:
                 pass 
             #     #be local storage instead?
             elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']!="":
+                if current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']!="":
+                    annotation = current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']
+                else:
+                    annotation = None
                 pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
                     name="pvc"+request_id,
                     namespace=namespace,
-                    annotations=current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'],
+                    annotations=annotation,
                     #labels=labels,
                     ),
                     spec=client.V1PersistentVolumeClaimSpec(
                     access_modes=['ReadWriteMany'],
-                    #storage_class_name='rook-cephfs',
                     storage_class_name=current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'],
                     resources=client.V1ResourceRequirements(
                     requests={
