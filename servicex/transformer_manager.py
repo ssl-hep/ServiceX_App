@@ -38,6 +38,7 @@ import os
 class TransformerManager:
 
     def __init__(self, manager_mode):
+        print(manager_mode)
         if manager_mode == 'internal-kubernetes':
             kubernetes.config.load_incluster_config()
         elif manager_mode == 'external-kubernetes':
@@ -114,6 +115,43 @@ class TransformerManager:
                 pass 
             #     #be local storage instead?
             elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']!="":
+                # from __future__ import print_function
+                # import time
+                # import kubernetes.client
+                # from kubernetes.client.rest import ApiException
+                # from pprint import pprint
+                # configuration = kubernetes.client.Configuration()
+                # # Configure API key authorization: BearerToken
+                # configuration.api_key['authorization'] = 'YOUR_API_KEY'
+                # # Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+                # # configuration.api_key_prefix['authorization'] = 'Bearer'
+
+                # # Defining host is optional and default to http://localhost
+                # configuration.host = "http://localhost"
+
+                # # Enter a context with an instance of the API kubernetes.client
+                # with kubernetes.client.ApiClient(configuration) as api_client:
+                #     # Create an instance of the API class
+                #     api_instance = kubernetes.client.CoreV1Api(api_client)
+                #     namespace = 'zora' # str | object name and auth scope, such as for teams and projects
+                # body = kubernetes.client.V1PersistentVolumeClaim() # V1PersistentVolumeClaim | 
+                # pretty = 'pretty_example' # str | If 'true', then the output is pretty printed. (optional)
+                # dry_run = 'dry_run_example' # str | When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed (optional)
+                # field_manager = 'field_manager_example' # str | fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. (optional)
+
+                # try:
+                #     api_response = api_instance.create_namespaced_persistent_volume_claim(namespace, body, pretty=pretty, dry_run=dry_run, field_manager=field_manager)
+                #     pprint(api_response)
+                # except ApiException as e:
+                #     print("Exception when calling CoreV1Api->create_namespaced_persistent_volume_claim: %s\n" % e)
+                
+                
+                
+                
+                
+                
+                
+            
                 if current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']!="":
                     annotation = current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']
                 else:
@@ -141,6 +179,7 @@ class TransformerManager:
                 persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name="pvc"+request_id))
                 volume_mounts.append(
                 client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
+    
             elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "": 
                 pvc = client.V1Volume(
                 name='posix-volume',
