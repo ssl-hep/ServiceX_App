@@ -177,6 +177,7 @@ class TransformerManager:
                 pvc = client.V1Volume(
                 name='posix-volume',
                 persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name="pvc"+request_id))
+                volumes.append(pvc)
                 volume_mounts.append(
                 client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
     
