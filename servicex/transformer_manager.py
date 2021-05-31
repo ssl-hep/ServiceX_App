@@ -110,6 +110,7 @@ class TransformerManager:
 
         if result_destination =='volume':
             if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "": 
+            #     WIP 
                 pass 
             #     #be local storage instead?
             elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']!="":
@@ -117,24 +118,24 @@ class TransformerManager:
                     annotation = current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']
                 else:
                     annotation = None
-                #hypothesis; kubenetes don't like None
-                claim = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
+                #hypothesis; kubenetes don't like None?
+                pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
                     name="pvc"+request_id,
                     namespace=namespace
                     # annotations=annotation,
                     # labels=None
                     ),
                     spec=client.V1PersistentVolumeClaimSpec(
-                    access_modes=['ReadWriteMany'],
-                    storage_class_name=current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'],
-                    resources=client.V1ResourceRequirements(
-                    requests={
-                        'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
-                    })))
-                api_core = client.CoreV1Api()
-                print(namespace)
-                api_core.create_namespaced_persistent_volume_claim(namespace=namespace,body=claim)
-                
+                        access_modes=['ReadWriteMany'],
+                        storage_class_name=current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'],
+                        resources=client.V1ResourceRequirements(
+                            requests={
+                            'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
+                            })
+                        )
+                    )
+                # api_core = client.CoreV1Api()
+                # api_core.create_namespaced_persistent_volume_claim(namespace=namespace,body=pvc)
                 pvc = client.V1Volume(
                 name='posix-volume',
                 persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name="pvc"+request_id))
