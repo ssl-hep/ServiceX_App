@@ -127,19 +127,8 @@ class SubmitTransformationRequest(ServiceXResource):
                 # WHat happens if object-store and object_store is None?
 
 
-            #hard-coding for PV
-            # print(args['result-destination'])
-            # args['result-destination'] = TransformRequest.VOLUME_DEST
-            # if args['result-destination'] == TransformRequest.VOLUME_DEST:
-            # if config['TRANSFORMER_PERSISTENCE_CLAIM']==None and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']==None:
-            # #         pass
-            # #     elif config['TRANSFORMER_PERSISTENCE_CLAIM']==None:
-            # #         pass
-
-
-
-            if transformation_request['result-destination'] == TransformRequest.KAFKA_DEST:
-                broker = transformation_request['kafka']['broker']
+            if args['result-destination'] == TransformRequest.KAFKA_DEST:
+                broker = args['kafka']['broker']
             else:
                 broker = None
 
