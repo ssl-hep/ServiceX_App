@@ -152,8 +152,8 @@ class TransformerManager:
                 pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
                     name="pvc"+request_id,
                     namespace=namespace
-                    annotations=annotation,
-                    labels=None
+                    # annotations=annotation,
+                    # labels=None
                     ),
                     spec=client.V1PersistentVolumeClaimSpec(
                         access_modes=['ReadWriteMany'],
