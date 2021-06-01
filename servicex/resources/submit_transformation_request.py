@@ -109,23 +109,11 @@ class SubmitTransformationRequest(ServiceXResource):
             if bool(did) == bool(file_list):
                 raise BadRequest("Must provide did or file-list but not both")
 
-            #edit this: 
             if self.object_store and \
                     args['result-destination'] == \
                     TransformRequest.OBJECT_STORE_DEST:
                 self.object_store.create_bucket(request_id)
                 # WHat happens if object-store and object_store is None?
-
-
-            #hard-coding for PV
-            # print(args['result-destination'])
-            # args['result-destination'] = TransformRequest.VOLUME_DEST
-            # if args['result-destination'] == TransformRequest.VOLUME_DEST:
-            # if config['TRANSFORMER_PERSISTENCE_CLAIM']==None and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']==None:
-            # #         pass
-            # #     elif config['TRANSFORMER_PERSISTENCE_CLAIM']==None:
-            # #         pass
-
 
 
             if args['result-destination'] == TransformRequest.KAFKA_DEST:
