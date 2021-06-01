@@ -143,35 +143,27 @@ class TransformerManager:
                 #     pprint(api_response)
                 # except ApiException as e:
                 #     print("Exception when calling CoreV1Api->create_namespaced_persistent_volume_claim: %s\n" % e)
-                
-                
-                
-                
-                
-                
-                
-            
                 if current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']!="":
                     annotation = current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']
                 else:
                     annotation = None
                 #hypothesis; kubenetes don't like None?
-                pvc = client.V1PersistentVolumeClaim()
-                # pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
-                #     name="pvc"+request_id,
-                #     namespace=namespace
-                #     # annotations=annotation,
-                #     # labels=None
-                #     ),
-                #     spec=client.V1PersistentVolumeClaimSpec(
-                #         access_modes=['ReadWriteMany'],
-                #         storage_class_name=current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'],
-                #         resources=client.V1ResourceRequirements(
-                #             requests={
-                #             'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
-                #             })
-                #         )
-                #     )
+                # pvc = client.V1PersistentVolumeClaim() this seems to work!!
+                pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
+                    name="pvc"+request_id,
+                    namespace=namespace
+                    annotations=annotation,
+                    labels=None
+                    ),
+                    spec=client.V1PersistentVolumeClaimSpec(
+                        access_modes=['ReadWriteMany'],
+                        storage_class_name=current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'],
+                        resources=client.V1ResourceRequirements(
+                            requests={
+                            'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
+                            })
+                        )
+                    )
                 api_core = client.CoreV1Api()
                 api_core.create_namespaced_persistent_volume_claim(namespace,pvc)
                 print("success?")
