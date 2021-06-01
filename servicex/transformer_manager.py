@@ -32,8 +32,6 @@ import kubernetes
 from kubernetes import client
 from flask import current_app
 
-import os
-
 
 class TransformerManager:
 
@@ -48,9 +46,12 @@ class TransformerManager:
     @staticmethod
     def create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
                           result_destination, result_format, x509_secret, kafka_broker,
-                          generated_code_cm):
-        volume_mounts = []
-        volumes = []
+                          generated_code_cm, namespace):
+        volume_mounts = [
+            client.V1VolumeMount(
+                name='x509-secret',
+                mount_path='/etc/grid-security-ro')
+        ]
 
         if x509_secret:
             volume_mounts.append(
@@ -109,79 +110,50 @@ class TransformerManager:
                                 value=current_app.config['MINIO_SECRET_KEY']),
             ]
 
-        if result_destination =='volume':
-            if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "": 
-            #     WIP 
-                pass 
-            #     #be local storage instead?
-            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']!="":
-                # from __future__ import print_function
-                # import time
-                # import kubernetes.client
-                # from kubernetes.client.rest import ApiException
-                # from pprint import pprint
-                # configuration = kubernetes.client.Configuration()
-                # # Configure API key authorization: BearerToken
-                # configuration.api_key['authorization'] = 'YOUR_API_KEY'
-                # # Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
-                # # configuration.api_key_prefix['authorization'] = 'Bearer'
-
-                # # Defining host is optional and default to http://localhost
-                # configuration.host = "http://localhost"
-
-                # Enter a context with an instance of the API kubernetes.client
-                # with kubernetes.client.ApiClient(configuration) as api_client:
-                #     # Create an instance of the API class
-                #     api_instance = kubernetes.client.CoreV1Api(api_client)
-                #     namespace = 'zora' # str | object name and auth scope, such as for teams and projects
-                # body = kubernetes.client.V1PersistentVolumeClaim() # V1PersistentVolumeClaim | 
-                # # pretty = 'pretty_example' # str | If 'true', then the output is pretty printed. (optional)
-                # # dry_run = 'dry_run_example' # str | When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed (optional)
-                # # field_manager = 'field_manager_example' # str | fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. (optional)
-
-                # try:
-                #     api_response = api_instance.create_namespaced_persistent_volume_claim(namespace, body)
-                #     pprint(api_response)
-                # except ApiException as e:
-                #     print("Exception when calling CoreV1Api->create_namespaced_persistent_volume_claim: %s\n" % e)
-                if current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']!="":
+        if result_destination == 'volume':
+            if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and \
+                    current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "":
+                # Should write to local/pod
+                pass
+            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and \
+                    current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] != "":
+                if current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'] != "":
                     annotation = current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']
                 else:
                     annotation = None
-                #hypothesis; kubenetes don't like None?
-                # pvc = client.V1PersistentVolumeClaim() this seems to work!!
                 pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
                     name="pvc"+request_id,
-                    namespace=namespace
-                    # annotations=annotation,
+                    namespace=namespace,
+                    annotations=annotation
                     # labels=None
                     ),
                     spec=client.V1PersistentVolumeClaimSpec(
                         access_modes=['ReadWriteMany'],
-                        storage_class_name=current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'],
+                        storage_class_name=current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'], # NOQA 501
                         resources=client.V1ResourceRequirements(
                             requests={
-                            'storage': current_app.config['TRANSFORMER_PERSISTENCE_SIZE']
+                                'storage': current_app.config[
+                                    'TRANSFORMER_PERSISTENCE_SIZE']
                             })
-                        )
+                    )
                     )
                 api_core = client.CoreV1Api()
-                api_core.create_namespaced_persistent_volume_claim(namespace,pvc)
-                print("success?")
+                api_core.create_namespaced_persistent_volume_claim(namespace, pvc)
                 pvc = client.V1Volume(
-                name='posix-volume',
-                persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name="pvc"+request_id))
+                    name='posix-volume',
+                    persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                        claim_name="pvc" + request_id))  # NOQA 501
                 volumes.append(pvc)
                 volume_mounts.append(
-                client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
-    
-            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "": 
+                    client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
+            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "":
                 pvc = client.V1Volume(
-                name='posix-volume',
-                persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(claim_name=current_app.config['TRANSFORMER_PERSISTENCE_CLAIM']))
+                    name='posix-volume',
+                    persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                        claim_name=current_app.config['TRANSFORMER_PERSISTENCE_CLAIM']))
                 volumes.append(pvc)
                 volume_mounts.append(
-                client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
+                    client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
 
         python_args = ["/servicex/proxy-exporter.sh & sleep 5 && " +
                        "PYTHONPATH=/generated:$PYTHONPATH " +
@@ -294,7 +266,7 @@ class TransformerManager:
         api_v1 = client.AppsV1Api()
         job = self.create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
                                      result_destination, result_format,
-                                     x509_secret, kafka_broker, generated_code_cm,namespace)
+                                     x509_secret, kafka_broker, generated_code_cm, namespace)
 
         self._create_job(api_v1, job, namespace)
 

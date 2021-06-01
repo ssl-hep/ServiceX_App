@@ -126,7 +126,6 @@ class SubmitTransformationRequest(ServiceXResource):
                 self.object_store.create_bucket(request_id)
                 # WHat happens if object-store and object_store is None?
 
-
             if args['result-destination'] == TransformRequest.KAFKA_DEST:
                 broker = args['kafka']['broker']
             else:
