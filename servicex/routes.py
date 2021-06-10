@@ -54,11 +54,12 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.users.slack_interaction import SlackInteraction
 
     from servicex.web.home import home
+    from servicex.web.global_dashboard import global_dashboard
+    from servicex.web.metrics import metrics
     from servicex.web.sign_in import sign_in
     from servicex.web.sign_out import sign_out
     from servicex.web.auth_callback import auth_callback
     from servicex.web.user_dashboard import user_dashboard
-    from servicex.web.global_dashboard import global_dashboard
     from servicex.web.view_profile import view_profile
     from servicex.web.edit_profile import edit_profile
     from servicex.web.api_token import api_token
@@ -77,6 +78,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     # Web Frontend Routes
     app.add_url_rule('/', 'home', home)
     app.add_url_rule('/global-dashboard', 'global-dashboard', global_dashboard)
+    app.add_url_rule('/metrics', 'metrics', metrics)
     app.add_url_rule('/sign-in', 'sign_in', sign_in)
     app.add_url_rule('/sign-out', 'sign_out', sign_out)
     app.add_url_rule('/auth-callback', 'auth_callback', auth_callback)

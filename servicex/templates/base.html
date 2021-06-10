@@ -36,6 +36,7 @@
           <a class="nav-item nav-link" href="{{ config['DOCS_BASE_URL'] }}">Docs</a>
         {% if not config['ENABLE_AUTH'] %}
           <a href="{{ url_for('global-dashboard') }}" class="nav-item nav-link">Dashboard</a>
+          <a href="{{ url_for('metrics') }}" class="nav-item nav-link">Metrics</a>
         {% endif %}
         </div>
         <!-- Navbar Right Side -->

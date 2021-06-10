@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% set base_url = "https://atlas-kibana.mwt2.org:5601/s/servicex/app/visualize?auth_provider_hint=anonymous1#" %}
+
+{% block content %}
+
+  <div>
+    <div class="content-section" style="display: flex; flex-direction: column; gap: 20px">
+      <h4 class="mb-3">Metrics</h4>
+      <iframe style="border: 0; min-width: 400px; min-height: 300px"
+          src="{{ base_url }}/edit/155c15c0-b2a0-11eb-89e4-591876ef80c0?embed=true&_g=(refreshInterval%3A(pause%3A!t%2Cvalue%3A0)%2Ctime%3A(from%3Anow-60m%2Cto%3Anow))">
+      </iframe>
+
+      <iframe style="border: 0; min-width: 400px; min-height: 300px"
+          src="{{ base_url }}/edit/5d0222d0-ad1d-11eb-8b3b-c396407b1355?embed=true&_g=(refreshInterval%3A(pause%3A!t%2Cvalue%3A0)%2Ctime%3A(from%3Anow-60m%2Cto%3Anow))">
+      </iframe>
+    </div>
+  </div>
+
+{% endblock %}
