@@ -1,3 +1,5 @@
+import os
+
 from flask import redirect, url_for, current_app, session
 
 from servicex.decorators import oauth_required
@@ -20,9 +22,13 @@ def sign_out():
     session.clear()
 
     redirect_uri = url_for('home', _external=True)
+    if ('GLOBUS_CLIENT_ID' in os.environ):
+        client_id = os.environ['GLOBUS_CLIENT_ID']
+    else:
+        client_id = current_app.config['GLOBUS_CLIENT_ID']
     ga_logout_url = ''.join([
         "https://auth.globus.org/v2/web/logout",
-        f"?client={current_app.config['GLOBUS_CLIENT_ID']}",
+        f"?client={client_id}",
         f"&redirect_uri={redirect_uri}",
         "&redirect_name=ServiceX Portal"
     ])
