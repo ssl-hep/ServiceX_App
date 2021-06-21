@@ -22,10 +22,8 @@ def sign_out():
     session.clear()
 
     redirect_uri = url_for('home', _external=True)
-    if ('GLOBUS_CLIENT_ID' in os.environ):
-        client_id = os.environ['GLOBUS_CLIENT_ID']
-    else:
-        client_id = current_app.config['GLOBUS_CLIENT_ID']
+    client_id = os.environ.get('GLOBUS_CLIENT_ID',
+                               current_app.config['GLOBUS_CLIENT_ID'])
     ga_logout_url = ''.join([
         "https://auth.globus.org/v2/web/logout",
         f"?client={client_id}",

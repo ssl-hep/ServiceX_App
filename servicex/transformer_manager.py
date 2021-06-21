@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import base64
+import os
 from typing import Optional
 
 import kubernetes
@@ -97,13 +98,19 @@ class TransformerManager:
             env = env + [env_var_instance_name]
 
         if result_destination == 'object-store':
+            minio_url = os.environ.get('MINIO_URL',
+                                       default = current_app.config['MINIO_URL_TRANSFORMER'])
+            access_key = os.environ.get('MINIO_ACCESS_KEY',
+                                              default = current_app.config['MINIO_ACCESS_KEY'])
+            secret_key = os.environ.get('MINIO_SECRET_KEY',
+                                              default = current_app.config['MINIO_SECRET_KEY'])
             env = env + [
                 client.V1EnvVar(name='MINIO_URL',
-                                value=current_app.config['MINIO_URL_TRANSFORMER']),
+                                value=minio_url),
                 client.V1EnvVar(name='MINIO_ACCESS_KEY',
-                                value=current_app.config['MINIO_ACCESS_KEY']),
+                                value=access_key),
                 client.V1EnvVar(name='MINIO_SECRET_KEY',
-                                value=current_app.config['MINIO_SECRET_KEY']),
+                                value=secret_key),
             ]
 
         python_args = ["/servicex/proxy-exporter.sh & sleep 5 && " +
