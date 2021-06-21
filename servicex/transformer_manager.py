@@ -99,11 +99,11 @@ class TransformerManager:
 
         if result_destination == 'object-store':
             minio_url = os.environ.get('MINIO_URL',
-                                       default = current_app.config['MINIO_URL_TRANSFORMER'])
+                                       current_app.config['MINIO_URL_TRANSFORMER'])
             access_key = os.environ.get('MINIO_ACCESS_KEY',
-                                              default = current_app.config['MINIO_ACCESS_KEY'])
+                                        current_app.config['MINIO_ACCESS_KEY'])
             secret_key = os.environ.get('MINIO_SECRET_KEY',
-                                              default = current_app.config['MINIO_SECRET_KEY'])
+                                        current_app.config['MINIO_SECRET_KEY'])
             env = env + [
                 client.V1EnvVar(name='MINIO_URL',
                                 value=minio_url),
