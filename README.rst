@@ -11,7 +11,7 @@ ServiceX REST Server
 This is a flask app for receiving user requests and orchestrating the ServiceX
 services:
 
-.. image:: doc/sequence_diagram.png
+.. image:: https://servicex.readthedocs.io/en/latest/img/ServiceX-request-lifecycle.png
 
 User Management
 ---------------
