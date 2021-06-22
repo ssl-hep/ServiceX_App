@@ -81,7 +81,8 @@ def create_app(test_config=None,
             transformer_manager = provided_transformer_manager
 
         if not provided_rabbit_adaptor:
-            rabbit_adaptor = RabbitAdaptor(app.config['RABBIT_MQ_URL'])
+            rabbit_url = os.environ.get('RABBIT_MQ_URL', app.config['RABBIT_MQ_URL'])
+            rabbit_adaptor = RabbitAdaptor(rabbit_url)
         else:
             rabbit_adaptor = provided_rabbit_adaptor
 

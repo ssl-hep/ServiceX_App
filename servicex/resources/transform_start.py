@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
+
 from flask import current_app
 
 from servicex.models import TransformRequest, db
@@ -60,8 +62,9 @@ class TransformStart(ServiceXResource):
                                    max_message_size=max_message_size,
                                    num_partitions=100)
 
-            rabbitmq_uri = current_app.config['TRANSFORMER_RABBIT_MQ_URL']
-            namepsace = current_app.config['TRANSFORMER_NAMESPACE']
+            rabbitmq_uri = os.environ.get('TRANSFORMER_RABBIT_MQ_URL',
+                                          current_app.config['TRANSFORMER_RABBIT_MQ_URL'])
+            namespace = current_app.config['TRANSFORMER_NAMESPACE']
             x509_secret = current_app.config['TRANSFORMER_X509_SECRET']
             generated_code_cm = submitted_request.generated_code_cm
 
@@ -69,7 +72,7 @@ class TransformStart(ServiceXResource):
                 image=submitted_request.image, request_id=request_id,
                 workers=submitted_request.workers,
                 chunk_size=submitted_request.chunk_size, rabbitmq_uri=rabbitmq_uri,
-                namespace=namepsace,
+                namespace=namespace,
                 x509_secret=x509_secret,
                 generated_code_cm=generated_code_cm,
                 result_destination=submitted_request.result_destination,
