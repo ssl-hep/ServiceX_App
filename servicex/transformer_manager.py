@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
+
 import base64
 from typing import Optional
 
@@ -34,6 +36,7 @@ from flask import current_app
 
 
 class TransformerManager:
+    POSIX_VOLUME_MOUNT = "/posix_volume"
 
     def __init__(self, manager_mode):
         if manager_mode == 'internal-kubernetes':
@@ -111,49 +114,7 @@ class TransformerManager:
             ]
 
         if result_destination == 'volume':
-            if current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and \
-                    current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] == "":
-                # Should write to local/pod
-                pass
-            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and \
-                    current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] != "":
-                if current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'] != "":
-                    annotation = current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']
-                else:
-                    annotation = None
-                pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
-                    name="pvc"+request_id,
-                    namespace=namespace,
-                    annotations=annotation
-                    # labels=None
-                    ),
-                    spec=client.V1PersistentVolumeClaimSpec(
-                        access_modes=['ReadWriteMany'],
-                        storage_class_name=current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'], # NOQA 501
-                        resources=client.V1ResourceRequirements(
-                            requests={
-                                'storage': current_app.config[
-                                    'TRANSFORMER_PERSISTENCE_SIZE']
-                            })
-                    )
-                    )
-                api_core = client.CoreV1Api()
-                api_core.create_namespaced_persistent_volume_claim(namespace, pvc)
-                pvc = client.V1Volume(
-                    name='posix-volume',
-                    persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
-                        claim_name="pvc" + request_id))  # NOQA 501
-                volumes.append(pvc)
-                volume_mounts.append(
-                    client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
-            elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "":
-                pvc = client.V1Volume(
-                    name='posix-volume',
-                    persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
-                        claim_name=current_app.config['TRANSFORMER_PERSISTENCE_CLAIM']))
-                volumes.append(pvc)
-                volume_mounts.append(
-                    client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
+            TransformerManager.create_posix_volume(volumes, volume_mounts)
 
         python_args = ["/servicex/proxy-exporter.sh & sleep 5 && " +
                        "PYTHONPATH=/generated:$PYTHONPATH " +
@@ -162,9 +123,13 @@ class TransformerManager:
                        " --rabbit-uri " + rabbitmq_uri +
                        " --chunks " + str(chunk_size) +
                        " --result-destination " + result_destination +
-                       " --result-format " + result_format +
-                       " --subdir " + current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR']
+                       " --result-format " + result_format
                        ]
+
+        if result_destination == 'volume':
+            python_args[0] += " --output-dir " + os.path.join(
+                TransformerManager.POSIX_VOLUME_MOUNT,
+                current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR'])
 
         if kafka_broker:
             python_args[0] += " --brokerlist "+kafka_broker
@@ -217,6 +182,76 @@ class TransformerManager:
         )
 
         return deployment
+
+    @staticmethod
+    def create_posix_volume(volumes, volume_mounts):
+        if not current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] and \
+                not current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']:
+            empty_dir = client.V1Volume(
+                name='posix-volume',
+                empty_dir=client.V1EmptyDirVolumeSource())
+            volumes.append(empty_dir)
+        elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM']:
+            volumes.append(
+                client.V1Volume(
+                    name='posix-volume',
+                    persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                        claim_name=current_app.config['TRANSFORMER_PERSISTENCE_CLAIM']
+                    )
+                )
+            )
+        else:
+            volume =
+        volume_mounts.append(
+            client.V1VolumeMount(mount_path=TransformerManager.POSIX_VOLUME_MOUNT,
+                                 name='posix-volume'))
+
+    @staticmethod
+    def zora_posix_vol(volumes, volume_mounts):
+        if not current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] and \
+                not current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']:
+            # Should write to local/pod
+            pass
+        elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and \
+                current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] != "":
+            if current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'] != "":
+                annotation = current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']
+            else:
+                annotation = None
+            pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
+                name="pvc" + request_id,
+                namespace=namespace,
+                annotations=annotation
+                # labels=None
+            ),
+                spec=client.V1PersistentVolumeClaimSpec(
+                    access_modes=['ReadWriteMany'],
+                    storage_class_name=current_app.config[
+                        'TRANSFORMER_PERSISTENCE_STORAGE_CLASS'],  # NOQA 501
+                    resources=client.V1ResourceRequirements(
+                        requests={
+                            'storage': current_app.config[
+                                'TRANSFORMER_PERSISTENCE_SIZE']
+                        })
+                )
+            )
+            api_core = client.CoreV1Api()
+            api_core.create_namespaced_persistent_volume_claim(namespace, pvc)
+            pvc = client.V1Volume(
+                name='posix-volume',
+                persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                    claim_name="pvc" + request_id))  # NOQA 501
+            volumes.append(pvc)
+            volume_mounts.append(
+                client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
+        elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "":
+            pvc = client.V1Volume(
+                name='posix-volume',
+                persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                    claim_name=current_app.config['TRANSFORMER_PERSISTENCE_CLAIM']))
+            volumes.append(pvc)
+            volume_mounts.append(
+                client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
 
     @staticmethod
     def create_hpa_object(request_id):
