@@ -66,8 +66,15 @@ TRANSFORMER_MANAGER_MODE = 'external-kubernetes'
 TRANSFORMER_VALIDATE_DOCKER_IMAGE = True
 
 TRANSFORMER_MESSAGING = 'none'
-TRANSFORMER_PERSISTENCE_CLAIM = ""
+
+# --- Support for POSIX volumes in transformers ---
+
+# Set this if you have created a PVC and want the transformers to mount it
+TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM = ""
+
 TRANSFORMER_PERSISTENCE_STORAGE_CLASS = ""
+
+# The directory where the volume will be mounted
 TRANSFORMER_PERSISTENCE_SUBDIR = "output"
 
 TRANSFORMER_DEFAULT_IMAGE = "sslhep/servicex_func_adl_xaod_transformer:develop"

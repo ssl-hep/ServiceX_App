@@ -185,73 +185,38 @@ class TransformerManager:
 
     @staticmethod
     def create_posix_volume(volumes, volume_mounts):
-        if not current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] and \
+        if not current_app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM'] and \
                 not current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']:
             empty_dir = client.V1Volume(
                 name='posix-volume',
                 empty_dir=client.V1EmptyDirVolumeSource())
             volumes.append(empty_dir)
-        elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM']:
+        elif current_app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM']:
             volumes.append(
                 client.V1Volume(
                     name='posix-volume',
                     persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
-                        claim_name=current_app.config['TRANSFORMER_PERSISTENCE_CLAIM']
+                        claim_name=current_app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM']
                     )
                 )
             )
-        else:
-            volume =
+
         volume_mounts.append(
             client.V1VolumeMount(mount_path=TransformerManager.POSIX_VOLUME_MOUNT,
                                  name='posix-volume'))
 
-    @staticmethod
-    def zora_posix_vol(volumes, volume_mounts):
-        if not current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] and \
-                not current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS']:
-            # Should write to local/pod
-            pass
-        elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] == "" and \
-                current_app.config['TRANSFORMER_PERSISTENCE_STORAGE_CLASS'] != "":
-            if current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS'] != "":
-                annotation = current_app.config['TRANSFORMER_PERSISTENCE_ANNOTATIONS']
-            else:
-                annotation = None
-            pvc = client.V1PersistentVolumeClaim(metadata=client.V1ObjectMeta(
-                name="pvc" + request_id,
-                namespace=namespace,
-                annotations=annotation
-                # labels=None
-            ),
-                spec=client.V1PersistentVolumeClaimSpec(
-                    access_modes=['ReadWriteMany'],
-                    storage_class_name=current_app.config[
-                        'TRANSFORMER_PERSISTENCE_STORAGE_CLASS'],  # NOQA 501
-                    resources=client.V1ResourceRequirements(
-                        requests={
-                            'storage': current_app.config[
-                                'TRANSFORMER_PERSISTENCE_SIZE']
-                        })
-                )
-            )
-            api_core = client.CoreV1Api()
-            api_core.create_namespaced_persistent_volume_claim(namespace, pvc)
-            pvc = client.V1Volume(
-                name='posix-volume',
-                persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
-                    claim_name="pvc" + request_id))  # NOQA 501
-            volumes.append(pvc)
-            volume_mounts.append(
-                client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
-        elif current_app.config['TRANSFORMER_PERSISTENCE_CLAIM'] != "":
-            pvc = client.V1Volume(
-                name='posix-volume',
-                persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
-                    claim_name=current_app.config['TRANSFORMER_PERSISTENCE_CLAIM']))
-            volumes.append(pvc)
-            volume_mounts.append(
-                client.V1VolumeMount(mount_path="/posix_volume", name='posix-volume'))
+    def persistent_volume_claim_exists(self, claim_name, namespace):
+        api = client.CoreV1Api()
+
+        pvcs = api.list_namespaced_persistent_volume_claim(namespace=namespace, watch=False)
+        for pvc in pvcs.items:
+            if pvc.metadata.name == claim_name:
+                if pvc.status.phase == 'Bound':
+                    return True
+                else:
+                    print(f"Volume Claim '{claim_name} found, but it is not bound")
+                    return False
+        return False
 
     @staticmethod
     def create_hpa_object(request_id):
