@@ -341,7 +341,6 @@ class TestTransformerManager(ResourceTestBase):
         my_config = {
             'OBJECT_STORE_ENABLED': False,
             'TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM': None,
-            'TRANSFORMER_PERSISTENCE_STORAGE_CLASS': None,
             'TRANSFORMER_PERSISTENCE_SUBDIR': 'output-data',
             'TRANSFORMER_AUTOSCALE_ENABLED': False,
             'TRANSFORMER_CPU_LIMIT': 1
