@@ -98,19 +98,13 @@ class TransformerManager:
             env = env + [env_var_instance_name]
 
         if result_destination == 'object-store':
-            minio_url = os.environ.get('MINIO_URL',
-                                       current_app.config['MINIO_URL_TRANSFORMER'])
-            access_key = os.environ.get('MINIO_ACCESS_KEY',
-                                        current_app.config['MINIO_ACCESS_KEY'])
-            secret_key = os.environ.get('MINIO_SECRET_KEY',
-                                        current_app.config['MINIO_SECRET_KEY'])
             env = env + [
                 client.V1EnvVar(name='MINIO_URL',
-                                value=minio_url),
+                                value=current_app.config['MINIO_URL_TRANSFORMER']),
                 client.V1EnvVar(name='MINIO_ACCESS_KEY',
-                                value=access_key),
+                                value=current_app.config['MINIO_ACCESS_KEY']),
                 client.V1EnvVar(name='MINIO_SECRET_KEY',
-                                value=secret_key),
+                                value=current_app.config['MINIO_SECRET_KEY']),
             ]
 
         python_args = ["/servicex/proxy-exporter.sh & sleep 5 && " +

@@ -55,8 +55,18 @@ def create_app(test_config=None,
     JWTManager(app)
     if not test_config:
         app.config.from_envvar('APP_CONFIG_FILE')
+        # if configuration value is set in environment update the configuration
+        # value
+        for k in [key.upper() for key in app.config.keys()]:
+            if k in os.environ:
+                app.config[k] = os.environ[k]
     else:
         app.config.from_mapping(test_config)
+        # if configuration value is set in environment update the configuration
+        # value
+        for k in [key.upper() for key in app.config.keys()]:
+            if k in os.environ:
+                app.config[k] = os.environ[k]
         print("Transformer enabled: ", test_config['TRANSFORMER_MANAGER_ENABLED'])
 
     with app.app_context():
@@ -81,8 +91,7 @@ def create_app(test_config=None,
             transformer_manager = provided_transformer_manager
 
         if not provided_rabbit_adaptor:
-            rabbit_url = os.environ.get('RABBIT_MQ_URL', app.config['RABBIT_MQ_URL'])
-            rabbit_adaptor = RabbitAdaptor(rabbit_url)
+            rabbit_adaptor = RabbitAdaptor(app.config['RABBIT_MQ_URL'])
         else:
             rabbit_adaptor = provided_rabbit_adaptor
 

@@ -22,11 +22,9 @@ def sign_out():
     session.clear()
 
     redirect_uri = url_for('home', _external=True)
-    client_id = os.environ.get('GLOBUS_CLIENT_ID',
-                               current_app.config['GLOBUS_CLIENT_ID'])
     ga_logout_url = ''.join([
         "https://auth.globus.org/v2/web/logout",
-        f"?client={client_id}",
+        f"?client={current_app.config['GLOBUS_CLIENT_ID']}",
         f"&redirect_uri={redirect_uri}",
         "&redirect_name=ServiceX Portal"
     ])
