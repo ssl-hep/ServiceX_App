@@ -1,5 +1,3 @@
-import os
-
 from flask import redirect, url_for, current_app, session
 
 from servicex.decorators import oauth_required
