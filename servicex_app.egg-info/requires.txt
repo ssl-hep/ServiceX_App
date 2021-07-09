@@ -1,4 +1,4 @@
-flask
+flask<2.0,>=1.1.2
 Flask-WTF
 wtforms
 email-validator
@@ -11,11 +11,11 @@ Flask-Migrate
 confluent_kafka
 kubernetes
 minio
-elasticsearch
 psycopg2
 globus_sdk
 cryptography
 bootstrap-flask
+humanize
 
 [test]
 pytest>=5.2
@@ -24,4 +24,5 @@ coverage>=5.2
 codecov==2.1.8
 pytest-mock==3.2.0
 flake8>=3.8
+blinker
 pre-commit

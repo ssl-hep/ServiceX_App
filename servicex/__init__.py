@@ -27,10 +27,14 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
+
+from distutils.util import strtobool
+
 from flask import Flask
 from flask_bootstrap import Bootstrap
 from flask_jwt_extended import (JWTManager)
 from flask_restful import Api
+
 
 from servicex.code_gen_adapter import CodeGenAdapter
 from servicex.docker_repo_adapter import DockerRepoAdapter
@@ -57,18 +61,23 @@ def create_app(test_config=None,
         app.config.from_envvar('APP_CONFIG_FILE')
         # if configuration value is set in environment update the configuration
         # value
-        for k in [key.upper() for key in app.config.keys()]:
-            if k in os.environ:
-                app.config[k] = os.environ[k]
     else:
         app.config.from_mapping(test_config)
         # if configuration value is set in environment update the configuration
         # value
-        for k in [key.upper() for key in app.config.keys()]:
-            if k in os.environ:
-                app.config[k] = os.environ[k]
         print("Transformer enabled: ", test_config['TRANSFORMER_MANAGER_ENABLED'])
-
+    for k in [key.upper() for key in app.config.keys()]:
+        if k in os.environ:
+            val = os.environ[k]
+            if val.lower() in ['true', 'false']:
+                app.config[k] = strtobool(val)
+            else:
+                try:
+                    temp = int(val)
+                    app.config[k] = temp
+                except ValueError:
+                    app.config[k] = val
+    app.config['TRANSFORMER_MANAGER_ENABLED'] = False
     with app.app_context():
         # Validate did-finder scheme
         schemes = app.config['VALID_DID_SCHEMES']
