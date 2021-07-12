@@ -93,7 +93,6 @@ class ResourceTestBase:
         if docker_repo_adapter is None:
             docker_repo_adapter = MagicMock(DockerRepoAdapter)
             docker_repo_adapter.check_image_exists.return_value = True
-
         app = create_app(config, transformation_manager, rabbit_adaptor,
                          object_store, code_gen_service,
                          lookup_result_processor, docker_repo_adapter)

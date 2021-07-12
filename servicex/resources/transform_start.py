@@ -61,8 +61,6 @@ class TransformStart(ServiceXResource):
                                    max_message_size=max_message_size,
                                    num_partitions=100)
 
-            namespace = current_app.config['TRANSFORMER_NAMESPACE']
-            x509_secret = current_app.config['TRANSFORMER_X509_SECRET']
             generated_code_cm = submitted_request.generated_code_cm
 
             self.transformer_manager.launch_transformer_jobs(
@@ -70,8 +68,8 @@ class TransformStart(ServiceXResource):
                 workers=submitted_request.workers,
                 chunk_size=submitted_request.chunk_size,
                 rabbitmq_uri=current_app.config['TRANSFORMER_RABBIT_MQ_URL'],
-                namespace=namespace,
-                x509_secret=x509_secret,
+                namespace=current_app.config['TRANSFORMER_NAMESPACE'],
+                x509_secret=current_app.config['TRANSFORMER_X509_SECRET'],
                 generated_code_cm=generated_code_cm,
                 result_destination=submitted_request.result_destination,
                 result_format=submitted_request.result_format,

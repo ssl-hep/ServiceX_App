@@ -77,7 +77,6 @@ def create_app(test_config=None,
                     app.config[k] = temp
                 except ValueError:
                     app.config[k] = val
-    app.config['TRANSFORMER_MANAGER_ENABLED'] = False
     with app.app_context():
         # Validate did-finder scheme
         schemes = app.config['VALID_DID_SCHEMES']
