@@ -228,6 +228,16 @@ class TransformRequest(db.Model):
         return self.user.name
 
     @property
+    def submit_time_iso(self):
+        return self.submit_time.isoformat() + "Z"
+
+    @property
+    def finish_time_iso(self):
+        if self.finish_time is None:
+            return "now"
+        return self.finish_time.isoformat() + "Z"
+
+    @property
     def result_count(self) -> int:
         return TransformationResult.query.filter_by(request_id=self.request_id).count()
 
