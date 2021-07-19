@@ -6,10 +6,8 @@ import requests
 
 class MailgunAdaptor:
     def __init__(self):
-        self.api_key = os.environ.get('MAILGUN_API_KEY',
-                                      current_app.config.get('MAILGUN_API_KEY'))
-        self.domain = os.environ.get('MAILGUN_DOMAIN',
-                                     current_app.config.get('MAILGUN_DOMAIN'))
+        self.api_key = current_app.config.get('MAILGUN_API_KEY')
+        self.domain = current_app.config.get('MAILGUN_DOMAIN')
         self.endpoint = f"https://api.mailgun.net/v3/{self.domain}/messages"
 
     def send(self, email: str, template_name: str):
