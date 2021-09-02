@@ -125,7 +125,9 @@ def create_app(test_config=None,
         else:
             docker_repo_adapter = provided_docker_repo_adapter
 
-        if transformer_manager and app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM'] and \
+        if transformer_manager and \
+                'TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM' in app.config and \
+                app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM'] and \
                 not transformer_manager.persistent_volume_claim_exists(
                     app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM'],
                     app.config['TRANSFORMER_NAMESPACE']):

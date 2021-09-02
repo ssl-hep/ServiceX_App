@@ -185,7 +185,8 @@ class TransformerManager:
 
     @staticmethod
     def create_posix_volume(volumes, volume_mounts):
-        if not current_app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM']:
+        if 'TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM' not in current_app.config or \
+                not current_app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM']:
             empty_dir = client.V1Volume(
                 name='posix-volume',
                 empty_dir=client.V1EmptyDirVolumeSource())
