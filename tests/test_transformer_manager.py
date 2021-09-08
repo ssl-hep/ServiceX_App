@@ -426,6 +426,8 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_MAX_REPLICAS': 17,
             'TRANSFORMER_X509_SECRET': None
         }
+        transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
+
         client = self._test_client(transformation_manager=transformer,
                                    extra_config=cfg)
 

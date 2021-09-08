@@ -50,11 +50,8 @@ class TransformerManager:
     def create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
                           result_destination, result_format, x509_secret, kafka_broker,
                           generated_code_cm, namespace):
-        volume_mounts = [
-            client.V1VolumeMount(
-                name='x509-secret',
-                mount_path='/etc/grid-security-ro')
-        ]
+        volume_mounts = []
+        volumes = []
 
         if x509_secret:
             volume_mounts.append(
@@ -116,15 +113,18 @@ class TransformerManager:
         if result_destination == 'volume':
             TransformerManager.create_posix_volume(volumes, volume_mounts)
 
-        python_args = ["/servicex/proxy-exporter.sh & sleep 5 && " +
-                       "PYTHONPATH=/generated:$PYTHONPATH " +
-                       "python /servicex/transformer.py " +
-                       " --request-id " + request_id +
-                       " --rabbit-uri " + rabbitmq_uri +
-                       " --chunks " + str(chunk_size) +
-                       " --result-destination " + result_destination +
-                       " --result-format " + result_format
-                       ]
+        if x509_secret:
+            python_args = ["/servicex/proxy-exporter.sh & sleep 5 && "]
+        else:
+            python_args = [" "]
+
+        python_args[0] += "PYTHONPATH=/generated:$PYTHONPATH " + \
+                          "python /servicex/transformer.py " + \
+                          " --request-id " + request_id + \
+                          " --rabbit-uri " + rabbitmq_uri + \
+                          " --chunks " + str(chunk_size) + \
+                          " --result-destination " + result_destination + \
+                          " --result-format " + result_format
 
         if result_destination == 'volume':
             python_args[0] += " --output-dir " + os.path.join(
