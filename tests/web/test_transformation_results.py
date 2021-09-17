@@ -67,5 +67,5 @@ class TestUserDashboard(WebTestBase):
 
     def test_404(self, client, mock_treq_cls):
         mock_treq_cls.query.get.return_value = None
-        resp: Response = client.get(url_for('transformation_request', id_=1))
+        resp: Response = client.get(url_for('transformation_results', id_=1))
         assert resp.status_code == 404
