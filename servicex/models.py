@@ -136,8 +136,6 @@ class TransformRequest(db.Model):
     KAFKA_DEST = 'kafka'
     VOLUME_DEST = 'volume'
 
-    _cache = {}
-
     id = db.Column(db.Integer, primary_key=True)
     request_id = db.Column(db.String(48), unique=True, nullable=False, index=True)
     title = db.Column(db.String(128), nullable=True)
@@ -195,15 +193,6 @@ class TransformRequest(db.Model):
     @classmethod
     def return_json(cls, requests: Iterable['TransformRequest']):
         return {'requests': [r.to_json() for r in requests]}
-
-    @classmethod
-    def get_request_cached(cls, request_id):
-        if request_id in TransformRequest._cache:
-            return TransformRequest._cache[request_id]
-
-        live_val = TransformRequest.lookup(request_id)
-        TransformRequest._cache[request_id] = live_val.id
-        return live_val.id
 
     @classmethod
     def lookup(cls, key: Union[str, int]) -> Optional['TransformRequest']:
