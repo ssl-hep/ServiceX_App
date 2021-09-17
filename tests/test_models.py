@@ -117,6 +117,8 @@ class TestTransformRequest:
         mock_query.get.return_value = expected
         result = TransformRequest.lookup(expected.id)
         assert result == expected
+        mock_query.get.assert_called_once_with(expected.id)
+        mock_query.filter_by.assert_not_called()
 
     @unittest.mock.patch('flask_sqlalchemy._QueryProperty.__get__')
     def test_lookup_by_id_as_str(self, query_property_getter_mock):
@@ -125,6 +127,8 @@ class TestTransformRequest:
         mock_query.get.return_value = expected
         result = TransformRequest.lookup(str(expected.id))
         assert result == expected
+        mock_query.get.assert_called_once_with(str(expected.id))
+        mock_query.filter_by.assert_not_called()
 
     @unittest.mock.patch('flask_sqlalchemy._QueryProperty.__get__')
     def test_lookup_by_request_id(self, query_property_getter_mock):
@@ -133,6 +137,9 @@ class TestTransformRequest:
         mock_query.filter_by.return_value.one.return_value = expected
         result = TransformRequest.lookup(expected.request_id)
         assert result == expected
+        mock_query.filter_by.assert_called_once_with(request_id=expected.request_id)
+        mock_query.filter_by.return_value.one.assert_called_once()
+        mock_query.get.assert_not_called()
 
     @unittest.mock.patch('flask_sqlalchemy._QueryProperty.__get__')
     def test_lookup_not_found(self, query_property_getter_mock):
