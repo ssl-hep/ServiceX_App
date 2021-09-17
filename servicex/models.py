@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import hashlib
 from datetime import datetime, timedelta
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Union
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, ForeignKey, DateTime
@@ -201,14 +201,24 @@ class TransformRequest(db.Model):
         if request_id in TransformRequest._cache:
             return TransformRequest._cache[request_id]
 
-        live_val = TransformRequest.return_request(request_id)
+        live_val = TransformRequest.lookup(request_id)
         TransformRequest._cache[request_id] = live_val.id
         return live_val.id
 
     @classmethod
-    def return_request(cls, request_id) -> Optional['TransformRequest']:
+    def lookup(cls, key: Union[str, int]) -> Optional['TransformRequest']:
+        """
+        Looks up a TransformRequest by its result_id (UUID) or integer ID.
+        :param key: Lookup key. Must be an integer, UUID, or string representation of an integer.
+        If key is a numeric string, e.g. '17', it will be treated as an integer ID.
+        All other strings are assumed to be UUIDs (request_id).
+        :return result: TransformRequest with the given key, or None if not found.
+        """
         try:
-            return cls.query.filter_by(request_id=request_id).one()
+            if isinstance(key, int) or key.isnumeric():
+                return cls.query.get(key)
+            else:
+                return cls.query.filter_by(request_id=key).one()
         except NoResultFound:
             return None
 
