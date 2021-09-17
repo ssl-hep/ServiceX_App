@@ -15,7 +15,8 @@ def transformation_results(id_: str):
         abort(404)
     page = request.args.get('page', 1, type=int)
     filter_by_values = {}
-    if status := request.args.get("status"):
+    status = request.args.get("status")
+    if status:
         filter_by_values["transform_status"] = status
     pagination: Pagination = TransformationResult.query\
         .filter_by(request_id=treq.request_id, **filter_by_values)\
