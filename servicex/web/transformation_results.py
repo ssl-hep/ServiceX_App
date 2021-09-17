@@ -7,10 +7,7 @@ from servicex.models import TransformRequest, TransformationResult
 
 @oauth_required
 def transformation_results(id_: str):
-    if id_.isnumeric():
-        treq = TransformRequest.query.get(id_)
-    else:
-        treq = TransformRequest.query.filter_by(request_id=id_).one()
+    treq = TransformRequest.lookup(id_)
     if not treq:
         abort(404)
     page = request.args.get('page', 1, type=int)
