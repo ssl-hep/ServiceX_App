@@ -150,15 +150,12 @@ class TransformerManager:
             resources=resources
         )
 
-        priority_class_name=current_app.config.get('TRANSFORMER_PRIORITY_CLASS')
-        if not priority_class_name:
-            priority_class_name = None
         # Create and Configure a spec section
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={'app': "transformer-" + request_id}),
             spec=client.V1PodSpec(
                 restart_policy="Always",
-                priority_class_name=priority_class_name,
+                priority_class_name=current_app.config.get('TRANSFORMER_PRIORITY_CLASS', None),
                 containers=[container],
                 volumes=volumes))
 
