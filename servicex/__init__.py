@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from distutils.util import strtobool
+import sys
 
 import os
 from flask import Flask
@@ -41,6 +43,22 @@ from servicex.routes import add_routes
 from servicex.transformer_manager import TransformerManager
 
 
+def _override_config_with_environ(app):
+    """
+    Use app.config as a guide to configuration settings that can be overridden from env
+    vars.
+    """
+    # Env vars will be strings. Convert boolean values
+    def _convert_string(value):
+        return value if value not in ["true", "false"] else strtobool(value)
+
+    # Create a dictionary of environment vars that have keys that match keys from the
+    # loaded config. These will override anything from the config file
+    return {k: (lambda key, value: _convert_string(os.environ[k]))(k, v) for (k, v)
+            in app.config.items()
+            if k in os.environ}
+
+
 def create_app(test_config=None,
                provided_transformer_manager=None,
                provided_rabbit_adaptor=None,
@@ -55,14 +73,16 @@ def create_app(test_config=None,
     JWTManager(app)
     if not test_config:
         app.config.from_envvar('APP_CONFIG_FILE')
+        app.config.update(_override_config_with_environ(app))
     else:
         app.config.from_mapping(test_config)
         print("Transformer enabled: ", test_config['TRANSFORMER_MANAGER_ENABLED'])
 
     with app.app_context():
         # Validate did-finder scheme
-        if app.config['DID_FINDER_DEFAULT_SCHEME'] not in app.config['VALID_DID_SCHEMES']:
-            raise ValueError(f"Default DID Finder Scheme not listed in {app.config['VALID_DID_SCHEMES']}") # NOQA E501
+        schemes = app.config['VALID_DID_SCHEMES']
+        if app.config['DID_FINDER_DEFAULT_SCHEME'] not in schemes:
+            raise ValueError(f"Default DID Finder Scheme not listed in {schemes}")
 
         if app.config['OBJECT_STORE_ENABLED']:
             if not provided_object_store:
@@ -104,6 +124,15 @@ def create_app(test_config=None,
             docker_repo_adapter = DockerRepoAdapter()
         else:
             docker_repo_adapter = provided_docker_repo_adapter
+
+        if transformer_manager and \
+                'TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM' in app.config and \
+                app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM'] and \
+                not transformer_manager.persistent_volume_claim_exists(
+                    app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM'],
+                    app.config['TRANSFORMER_NAMESPACE']):
+            print("Supplied Transformer Persistent Volume Claim Doesn't exist")
+            sys.exit(-1)
 
         api = Api(app)
 

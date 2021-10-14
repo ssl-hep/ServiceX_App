@@ -27,6 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
 import sys
+from datetime import datetime, timezone
 
 from flask_restful import reqparse
 from flask import jsonify
@@ -53,7 +54,7 @@ class TransformationStatus(ServiceXResource):
 
     @auth_required
     def get(self, request_id):
-        transform = TransformRequest.return_request(request_id)
+        transform = TransformRequest.lookup(request_id)
         if not transform:
             msg = f'Transformation request not found with id: {request_id}'
             self.logger.error(msg)
@@ -61,14 +62,21 @@ class TransformationStatus(ServiceXResource):
 
         status_request = status_request_parser.parse_args()
 
+        # Format timestamps with military timezone, given that they are in UTC.
+        # See https://stackoverflow.com/a/42777551/8534196
+        iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
         result_dict = {
             "status": transform.status,
             "request-id": request_id,
+            "submit-time": transform.submit_time.strftime(iso_fmt),
+            "finish-time": transform.finish_time,
             "files-processed": transform.files_processed,
             "files-skipped": transform.files_failed,
             "files-remaining": transform.files_remaining,
             "stats": transform.statistics
         }
+        if transform.finish_time is not None:
+            result_dict["finish-time"] = transform.finish_time.strftime(iso_fmt)
 
         if status_request.details:
             result_dict['details'] = TransformationResult.to_json_list(
@@ -107,8 +115,9 @@ class TransformationStatusInternal(ServiceXResource):
             sys.stderr.write(f"+ Fatal error reported for {request_id} from " +
                              f"{status.source}: {status.info}\n")
 
-            submitted_request = TransformRequest.return_request(request_id)
+            submitted_request = TransformRequest.lookup(request_id)
             submitted_request.status = 'Fatal'
+            submitted_request.finish_time = datetime.now(tz=timezone.utc)
             submitted_request.failure_description = status.info
             submitted_request.save_to_db()
             db.session.commit()

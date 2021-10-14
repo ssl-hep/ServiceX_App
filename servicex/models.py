@@ -27,7 +27,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import hashlib
 from datetime import datetime, timedelta
-from typing import Iterable, List, Optional
+from typing import Iterable, List, Optional, Union
 
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import func, ForeignKey, DateTime
@@ -134,13 +134,13 @@ class TransformRequest(db.Model):
     __tablename__ = 'requests'
     OBJECT_STORE_DEST = 'object-store'
     KAFKA_DEST = 'kafka'
-
-    _cache = {}
+    VOLUME_DEST = 'volume'
 
     id = db.Column(db.Integer, primary_key=True)
     request_id = db.Column(db.String(48), unique=True, nullable=False, index=True)
     title = db.Column(db.String(128), nullable=True)
     submit_time = db.Column(db.DateTime, nullable=False)
+    finish_time = db.Column(db.DateTime, nullable=True)
     did = db.Column(db.String(512), unique=False, nullable=False)
     columns = db.Column(db.String(1024), unique=False, nullable=True)
     selection = db.Column(db.String(max_string_size), unique=False, nullable=True)
@@ -195,18 +195,19 @@ class TransformRequest(db.Model):
         return {'requests': [r.to_json() for r in requests]}
 
     @classmethod
-    def get_request_cached(cls, request_id):
-        if request_id in TransformRequest._cache:
-            return TransformRequest._cache[request_id]
-
-        live_val = TransformRequest.return_request(request_id)
-        TransformRequest._cache[request_id] = live_val.id
-        return live_val.id
-
-    @classmethod
-    def return_request(cls, request_id) -> Optional['TransformRequest']:
+    def lookup(cls, key: Union[str, int]) -> Optional['TransformRequest']:
+        """
+        Looks up a TransformRequest by its result_id (UUID) or integer ID.
+        :param key: Lookup key. Must be an integer, UUID, or string representation of an integer.
+        If key is a numeric string, e.g. '17', it will be treated as an integer ID.
+        All other strings are assumed to be UUIDs (request_id).
+        :return result: TransformRequest with the given key, or None if not found.
+        """
         try:
-            return cls.query.filter_by(request_id=request_id).one()
+            if isinstance(key, int) or key.isnumeric():
+                return cls.query.get(key)
+            else:
+                return cls.query.filter_by(request_id=key).one()
         except NoResultFound:
             return None
 
@@ -215,8 +216,12 @@ class TransformRequest(db.Model):
         return datetime.utcnow() - self.submit_time
 
     @property
+    def complete(self) -> bool:
+        return self.status in {"Complete", "Fatal", "Canceled"}
+
+    @property
     def incomplete(self) -> bool:
-        return self.status not in {"Complete", "Fatal"}
+        return self.status in {"Submitted", "Running"}
 
     @property
     def submitter_name(self):

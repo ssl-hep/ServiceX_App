@@ -25,9 +25,10 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+from datetime import datetime
 from unittest.mock import MagicMock
 
+from flask.testing import FlaskClient
 from pytest import fixture
 
 from servicex import create_app
@@ -58,6 +59,8 @@ class ResourceTestBase:
             'ADVERTISED_HOSTNAME': 'cern.analysis.ch:5000',
             'TRANSFORMER_PULL_POLICY': 'Always',
             'TRANSFORMER_VALIDATE_DOCKER_IMAGE': True,
+            'TRANSFORMER_PERSISTENCE_SUBDIR': "/foo",
+            'TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM': 'my-claim',
             'OBJECT_STORE_ENABLED': False,
             'MINIO_URL': 'localhost:9000',
             'MINIO_ACCESS_KEY': 'miniouser',
@@ -80,7 +83,7 @@ class ResourceTestBase:
         code_gen_service=MagicMock(CodeGenAdapter),
         lookup_result_processor=MagicMock(LookupResultProcessor),
         docker_repo_adapter=None
-    ):
+    ) -> FlaskClient:
         config = ResourceTestBase._app_config()
         config['TRANSFORMER_MANAGER_ENABLED'] = False
         config['TRANSFORMER_MANAGER_MODE'] = 'external'
@@ -101,13 +104,14 @@ class ResourceTestBase:
         return app.test_client()
 
     @fixture
-    def client(self):
+    def client(self) -> FlaskClient:
         return self._test_client()
 
     @staticmethod
     def _generate_transform_request():
         transform_request = TransformRequest()
-        transform_request.submit_time = 1000
+        transform_request.submit_time = datetime.min
+        transform_request.finish_time = None
         transform_request.request_id = 'BR549'
         transform_request.columns = 'electron.eta(), muon.pt()'
         transform_request.tree_name = 'Events'

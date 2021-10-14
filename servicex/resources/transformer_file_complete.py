@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
+from datetime import datetime, timezone
 
 from flask import request, current_app
 
@@ -50,16 +51,17 @@ class TransformerFileComplete(ServiceXResource):
 
     def put(self, request_id):
         info = request.get_json()
-        submitted_request = TransformRequest.return_request(request_id)
-        if submitted_request is None:
-            msg = f"Request not found with id: {request_id}"
+        self.logger.info(info)
+        transform_req = TransformRequest.lookup(request_id)
+        if transform_req is None:
+            msg = f"Request not found with id: '{request_id}'"
             self.logger.error(msg)
             return {"message": msg}, 404
 
         dataset_file = DatasetFile.get_by_id(info['file-id'])
 
         rec = TransformationResult(
-            did=submitted_request.did,
+            did=transform_req.did,
             file_id=dataset_file.id,
             request_id=request_id,
             file_path=info['file-path'],
@@ -72,14 +74,19 @@ class TransformerFileComplete(ServiceXResource):
         )
         rec.save_to_db()
 
-        if submitted_request.files_remaining <= 0:
-            namespace = current_app.config['TRANSFORMER_NAMESPACE']
-            self.logger.info("Job is all done... shutting down transformers")
-            self.transformer_manager.shutdown_transformer_job(request_id, namespace)
-            submitted_request.status = "Complete"
-            submitted_request.save_to_db()
+        # Commit here to avoid race condition with other file complete messages which
+        # could result in miscounting completed files.
+        db.session.commit()
 
-        self.logger.info(info)
+        files_remaining = transform_req.files_remaining
+        if files_remaining is not None and files_remaining == 0:
+            namespace = current_app.config['TRANSFORMER_NAMESPACE']
+            self.logger.info(f"Job {request_id} is all done... shutting down transformers")
+            self.transformer_manager.shutdown_transformer_job(request_id, namespace)
+            transform_req.status = "Complete"
+            transform_req.finish_time = datetime.now(tz=timezone.utc)
+            transform_req.save_to_db()
+
         db.session.commit()
 
         return "Ok"

@@ -39,34 +39,6 @@ from servicex.decorators import auth_required
 from servicex.models import TransformRequest, DatasetFile, db
 from servicex.resources.servicex_resource import ServiceXResource
 
-parser = reqparse.RequestParser()
-parser.add_argument('title', help='Optional title for this request (max 128 chars)')
-parser.add_argument('did', help='Dataset Identifier. Provide this or file-list')
-parser.add_argument(
-    'file-list',
-    type=list,
-    default=[],
-    location='json',
-    help='Static list of Root Files. Provide this or Dataset Identifier.'
-)
-parser.add_argument('columns', help='This field cannot be blank')
-parser.add_argument('selection', help='Query string')
-parser.add_argument('image', default=current_app.config['TRANSFORMER_DEFAULT_IMAGE'])
-parser.add_argument('tree-name')
-parser.add_argument('chunk-size', type=int)
-parser.add_argument('workers', type=int)
-parser.add_argument('result-destination', required=True, choices=[
-    TransformRequest.KAFKA_DEST,
-    TransformRequest.OBJECT_STORE_DEST
-])
-parser.add_argument(
-    'result-format', choices=['arrow', 'parquet', 'root-file'], default='arrow'
-)
-
-parser.add_argument('kafka', type=dict)
-kafka_parser = reqparse.RequestParser()
-kafka_parser.add_argument('broker', location=('kafka'))
-
 
 def _workflow_name(transform_request):
     'Look at the keys and determine what sort of a workflow we want to run'
@@ -98,12 +70,44 @@ class SubmitTransformationRequest(ServiceXResource):
         cls.code_gen_service = code_gen_service
         cls.lookup_result_processor = lookup_result_processor
         cls.docker_repo_adapter = docker_repo_adapter
+
+        cls.parser = reqparse.RequestParser()
+        cls.parser.add_argument('title',
+                                help='Optional title for this request (max 128 chars)')
+        cls.parser.add_argument('did',
+                                help='Dataset Identifier. Provide this or file-list')
+        cls.parser.add_argument(
+            'file-list',
+            type=list,
+            default=[],
+            location='json',
+            help='Static list of Root Files. Provide this or Dataset Identifier.'
+        )
+        cls.parser.add_argument('columns', help='This field cannot be blank')
+        cls.parser.add_argument('selection', help='Query string')
+        cls.parser.add_argument('image',
+                                default=current_app.config['TRANSFORMER_DEFAULT_IMAGE'])
+        cls.parser.add_argument('tree-name')
+        cls.parser.add_argument('chunk-size', type=int)
+        cls.parser.add_argument('workers', type=int)
+        cls.parser.add_argument('result-destination', required=True, choices=[
+            TransformRequest.KAFKA_DEST,
+            TransformRequest.OBJECT_STORE_DEST,
+            TransformRequest.VOLUME_DEST
+        ])
+        cls.parser.add_argument(
+            'result-format', choices=['arrow', 'parquet', 'root-file'], default='arrow'
+        )
+
+        cls.parser.add_argument('kafka', type=dict)
+        kafka_parser = reqparse.RequestParser()
+        kafka_parser.add_argument('broker', location=('kafka'))
         return cls
 
     @auth_required
     def post(self):
         try:
-            args = parser.parse_args()
+            args = self.parser.parse_args()
             config = current_app.config
             print("object store ", self.object_store)
 
@@ -115,6 +119,14 @@ class SubmitTransformationRequest(ServiceXResource):
             # did xor file_list
             if bool(did) == bool(file_list):
                 raise BadRequest("Must provide did or file-list but not both")
+
+            if did:
+                parsed_did = DIDParser(
+                    did, default_scheme=config['DID_FINDER_DEFAULT_SCHEME']
+                )
+                if parsed_did.scheme not in config['VALID_DID_SCHEMES']:
+                    msg = f"DID scheme is not supported: {parsed_did.scheme}"
+                    return {'message': msg}, 400
 
             if self.object_store and \
                     args['result-destination'] == \
@@ -136,7 +148,7 @@ class SubmitTransformationRequest(ServiceXResource):
             request_rec = TransformRequest(
                 request_id=str(request_id),
                 title=args.get("title"),
-                did=did if did else "File List Provided in Request",
+                did=parsed_did.full_did if did else "File List Provided in Request",
                 submit_time=datetime.now(tz=timezone.utc),
                 submitted_by=user.id if user is not None else None,
                 columns=args['columns'],
@@ -190,20 +202,12 @@ class SubmitTransformationRequest(ServiceXResource):
             if did:
                 did_request = {
                     "request_id": request_rec.request_id,
-                    "did": request_rec.did,
+                    "did": parsed_did.did,
                     "service-endpoint": self._generate_advertised_endpoint(
                         "servicex/internal/transformation/" +
                         request_rec.request_id
                     )
                 }
-
-                parsed_did = DIDParser(
-                    did, default_scheme=config['DID_FINDER_DEFAULT_SCHEME']
-                )
-                if parsed_did.scheme not in config['VALID_DID_SCHEMES']:
-                    msg = f"DID scheme is not supported: {parsed_did.scheme}"
-                    self.logger.error(f"DID scheme is not supported: {parsed_did.scheme}")
-                    return {'message': msg}, 400
 
                 self.rabbitmq_adaptor.basic_publish(exchange='',
                                                     routing_key=parsed_did.microservice_queue,

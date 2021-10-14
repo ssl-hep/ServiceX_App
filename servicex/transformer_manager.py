@@ -25,15 +25,19 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+import os
+
 import base64
 from typing import Optional
 
 import kubernetes
 from kubernetes import client
+from kubernetes.client.rest import ApiException
 from flask import current_app
 
 
 class TransformerManager:
+    POSIX_VOLUME_MOUNT = "/posix_volume"
 
     def __init__(self, manager_mode):
         if manager_mode == 'internal-kubernetes':
@@ -46,26 +50,27 @@ class TransformerManager:
     @staticmethod
     def create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
                           result_destination, result_format, x509_secret, kafka_broker,
-                          generated_code_cm):
-        volume_mounts = [
-            client.V1VolumeMount(
-                name='x509-secret',
-                mount_path='/etc/grid-security-ro')
-        ]
+                          generated_code_cm, namespace):
+        volume_mounts = []
+        volumes = []
 
-        volumes = [
-            client.V1Volume(
+        if x509_secret:
+            volume_mounts.append(
+                client.V1VolumeMount(
+                    name='x509-secret',
+                    mount_path='/etc/grid-security-ro')
+            )
+            volumes.append(client.V1Volume(
                 name='x509-secret',
                 secret=client.V1SecretVolumeSource(secret_name=x509_secret)
-            )
-        ]
+            ))
 
         if generated_code_cm:
             volumes.append(client.V1Volume(
                 name='generated-code',
                 config_map=client.V1ConfigMapVolumeSource(
                     name=generated_code_cm)
-                )
+            )
             )
             volume_mounts.append(
                 client.V1VolumeMount(mount_path="/generated", name='generated-code'))
@@ -106,14 +111,26 @@ class TransformerManager:
                                 value=current_app.config['MINIO_SECRET_KEY']),
             ]
 
-        python_args = ["/servicex/proxy-exporter.sh & sleep 5 && " +
-                       "PYTHONPATH=/generated:$PYTHONPATH " +
-                       "python /servicex/transformer.py " +
-                       " --request-id " + request_id +
-                       " --rabbit-uri " + rabbitmq_uri +
-                       " --chunks " + str(chunk_size) +
-                       " --result-destination " + result_destination +
-                       " --result-format " + result_format]
+        if result_destination == 'volume':
+            TransformerManager.create_posix_volume(volumes, volume_mounts)
+
+        if x509_secret:
+            python_args = ["/servicex/proxy-exporter.sh & sleep 5 && "]
+        else:
+            python_args = [" "]
+
+        python_args[0] += "PYTHONPATH=/generated:$PYTHONPATH " + \
+                          "python /servicex/transformer.py " + \
+                          " --request-id " + request_id + \
+                          " --rabbit-uri " + rabbitmq_uri + \
+                          " --chunks " + str(chunk_size) + \
+                          " --result-destination " + result_destination + \
+                          " --result-format " + result_format
+
+        if result_destination == 'volume':
+            python_args[0] += " --output-dir " + os.path.join(
+                TransformerManager.POSIX_VOLUME_MOUNT,
+                current_app.config['TRANSFORMER_PERSISTENCE_SUBDIR'])
 
         if kafka_broker:
             python_args[0] += " --brokerlist "+kafka_broker
@@ -138,6 +155,7 @@ class TransformerManager:
             metadata=client.V1ObjectMeta(labels={'app': "transformer-" + request_id}),
             spec=client.V1PodSpec(
                 restart_policy="Always",
+                priority_class_name=current_app.config.get('TRANSFORMER_PRIORITY_CLASS', None),
                 containers=[container],
                 volumes=volumes))
 
@@ -166,6 +184,41 @@ class TransformerManager:
         )
 
         return deployment
+
+    @staticmethod
+    def create_posix_volume(volumes, volume_mounts):
+        if 'TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM' not in current_app.config or \
+                not current_app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM']:
+            empty_dir = client.V1Volume(
+                name='posix-volume',
+                empty_dir=client.V1EmptyDirVolumeSource())
+            volumes.append(empty_dir)
+        else:
+            volumes.append(
+                client.V1Volume(
+                    name='posix-volume',
+                    persistent_volume_claim=client.V1PersistentVolumeClaimVolumeSource(
+                        claim_name=current_app.config['TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM']
+                    )
+                )
+            )
+
+        volume_mounts.append(
+            client.V1VolumeMount(mount_path=TransformerManager.POSIX_VOLUME_MOUNT,
+                                 name='posix-volume'))
+
+    def persistent_volume_claim_exists(self, claim_name, namespace):
+        api = client.CoreV1Api()
+
+        pvcs = api.list_namespaced_persistent_volume_claim(namespace=namespace, watch=False)
+        for pvc in pvcs.items:
+            if pvc.metadata.name == claim_name:
+                if pvc.status.phase == 'Bound':
+                    return True
+                else:
+                    print(f"Volume Claim '{claim_name} found, but it is not bound")
+                    return False
+        return False
 
     @staticmethod
     def create_hpa_object(request_id):
@@ -203,10 +256,13 @@ class TransformerManager:
     @staticmethod
     def _create_hpa(api_instance, hpa, namespace):
         # Create job
-        api_response = api_instance.create_namespaced_horizontal_pod_autoscaler(
-            body=hpa,
-            namespace=namespace)
-        print("Job created. status='%s'" % str(api_response.status))
+        try:
+            api_response = api_instance.create_namespaced_horizontal_pod_autoscaler(
+                body=hpa,
+                namespace=namespace)
+            print("Job created. status='%s'" % str(api_response.status))
+        except ApiException as e:
+            print("Exception during HPA Creation:", e)
 
     def launch_transformer_jobs(self, image, request_id, workers, chunk_size,
                                 rabbitmq_uri, namespace, x509_secret, generated_code_cm,
@@ -215,7 +271,7 @@ class TransformerManager:
         api_v1 = client.AppsV1Api()
         job = self.create_job_object(request_id, image, chunk_size, rabbitmq_uri, workers,
                                      result_destination, result_format,
-                                     x509_secret, kafka_broker, generated_code_cm)
+                                     x509_secret, kafka_broker, generated_code_cm, namespace)
 
         self._create_job(api_v1, job, namespace)
 
@@ -226,23 +282,32 @@ class TransformerManager:
 
     @staticmethod
     def shutdown_transformer_job(request_id, namespace):
-        if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED']:
-            autoscaler_api = kubernetes.client.AutoscalingV1Api()
-            autoscaler_api.delete_namespaced_horizontal_pod_autoscaler(
+        try:
+            if current_app.config['TRANSFORMER_AUTOSCALE_ENABLED']:
+                autoscaler_api = kubernetes.client.AutoscalingV1Api()
+                autoscaler_api.delete_namespaced_horizontal_pod_autoscaler(
+                    name="transformer-" + request_id,
+                    namespace=namespace
+                )
+        except ApiException as e:
+            print(f"Exception during Job {request_id} HPA Shut Down", e)
+
+        try:
+            api_v1 = client.AppsV1Api()
+            api_v1.delete_namespaced_deployment(
                 name="transformer-" + request_id,
                 namespace=namespace
             )
+        except ApiException as e:
+            print(f"Exception during Job {request_id} Deployment Shut Down", e)
 
-        api_v1 = client.AppsV1Api()
-        api_v1.delete_namespaced_deployment(
-            name="transformer-" + request_id,
-            namespace=namespace
-        )
-
-        api_core = client.CoreV1Api()
-        configmap_name = "{}-generated-source".format(request_id)
-        api_core.delete_namespaced_config_map(name=configmap_name,
-                                              namespace=namespace)
+        try:
+            api_core = client.CoreV1Api()
+            configmap_name = "{}-generated-source".format(request_id)
+            api_core.delete_namespaced_config_map(name=configmap_name,
+                                                  namespace=namespace)
+        except ApiException as e:
+            print(f"Exception during Job {request_id} ConfigMap cleanup", e)
 
     @staticmethod
     def get_deployment_status(

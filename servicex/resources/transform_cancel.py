@@ -25,27 +25,45 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-from flask import request
+from datetime import datetime, timezone
 
+import kubernetes
+from flask import current_app
+
+from servicex.decorators import auth_required
 from servicex.models import TransformRequest, db
 from servicex.resources.servicex_resource import ServiceXResource
+from servicex.resources.transform_start import TransformStart
+from servicex.transformer_manager import TransformerManager
 
 
-class FilesetComplete(ServiceXResource):
-    @classmethod
-    def make_api(cls, lookup_result_processor):
-        cls.lookup_result_processor = lookup_result_processor
-        return cls
+class TransformCancel(ServiceXResource):
 
-    def put(self, request_id):
-        summary = request.get_json()
-        rec = TransformRequest.lookup(request_id)
-        self.lookup_result_processor.report_fileset_complete(
-            rec,
-            num_files=summary['files'],
-            num_skipped=summary['files-skipped'],
-            total_events=summary['total-events'],
-            total_bytes=summary['total-bytes'],
-            did_lookup_time=summary['elapsed-time']
-        )
+    @auth_required
+    def get(self, request_id: str):
+        transform_req = TransformRequest.lookup(request_id)
+        if not transform_req:
+            msg = f'Transformation request not found with id: {request_id}'
+            return {'message': msg}, 404
+        elif transform_req.complete:
+            msg = f"Transform request with id {request_id} is not in progress."
+            return {"message": msg}, 400
+
+        manager: TransformerManager = TransformStart.transformer_manager
+        namespace = current_app.config['TRANSFORMER_NAMESPACE']
+
+        if transform_req.status == "Running":
+            try:
+                manager.shutdown_transformer_job(request_id, namespace)
+            except kubernetes.client.exceptions.ApiException as exc:
+                if exc.status == 404:
+                    pass
+                else:
+                    return {'message': exc.reason}, exc.status
+
+        transform_req.status = "Canceled"
+        transform_req.finish_time = datetime.now(tz=timezone.utc)
+        transform_req.save_to_db()
         db.session.commit()
+
+        return {"message": f"Canceled transformation request {request_id}"}, 200

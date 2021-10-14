@@ -40,7 +40,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
     @staticmethod
     def _generate_transformation_request(**kwargs):
         request = {
-            'did': '123-45-678',
+            'did': 'rucio://123-45-678',
             'columns': "e.e, e.p",
             'result-destination': 'kafka',
             'kafka': {'broker': 'ssl.hep.kafka:12332'},
@@ -114,9 +114,10 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert response.status_code == 200
         request_id = response.json['request_id']
         with client.application.app_context():
-            saved_obj = TransformRequest.return_request(request_id)
+            saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
-            assert saved_obj.did == '123-45-678'
+            assert saved_obj.did == 'rucio://123-45-678'
+            assert saved_obj.finish_time is None
             assert saved_obj.request_id == request_id
             assert saved_obj.title is None
             assert saved_obj.columns == "e.e, e.p"
@@ -156,6 +157,33 @@ class TestSubmitTransformationRequest(ResourceTestBase):
             body=json.dumps(publish_body)
         )
 
+    def test_submit_transformation_default_scheme(self, mock_rabbit_adaptor, mock_app_version):
+        client = self._test_client(rabbit_adaptor=mock_rabbit_adaptor)
+        request = self._generate_transformation_request()
+        request['did'] = '123-45-678'  # No scheme
+
+        response = client.post('/servicex/transformation', json=request)
+        assert response.status_code == 200
+        request_id = response.json['request_id']
+        with client.application.app_context():
+            saved_obj = TransformRequest.lookup(request_id)
+            assert saved_obj
+            assert saved_obj.did == 'rucio://123-45-678'
+
+        service_endpoint = \
+            "http://cern.analysis.ch:5000/servicex/internal/transformation/" + \
+            request_id
+        publish_body = {
+            "request_id": request_id,
+            "did": "123-45-678",
+            "service-endpoint": service_endpoint
+        }
+        mock_rabbit_adaptor.basic_publish.assert_called_with(
+            exchange='',
+            routing_key='rucio_did_requests',
+            body=json.dumps(publish_body)
+        )
+
     def test_submit_transformation_with_root_file(
         self, mocker, mock_rabbit_adaptor, mock_code_gen_service, mock_app_version
     ):
@@ -171,9 +199,9 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request_id = response.json['request_id']
 
         with client.application.app_context():
-            saved_obj = TransformRequest.return_request(request_id)
+            saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
-            assert saved_obj.did == '123-45-678'
+            assert saved_obj.did == 'rucio://123-45-678'
             assert saved_obj.request_id == request_id
             assert saved_obj.columns is None
             assert saved_obj.selection == 'test-string'
@@ -308,7 +336,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
 
         mock_object_store.create_bucket.assert_called_with(request_id)
         with client.application.app_context():
-            saved_obj = TransformRequest.return_request(request_id)
+            saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
             assert saved_obj.result_destination == 'object-store'
             assert saved_obj.result_format == 'parquet'
@@ -323,7 +351,7 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         request_id = response.json['request_id']
 
         with client.application.app_context():
-            saved_obj = TransformRequest.return_request(request_id)
+            saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
             assert saved_obj.submitted_by == mock_requesting_user.id
 
@@ -334,6 +362,6 @@ class TestSubmitTransformationRequest(ResourceTestBase):
         assert response.status_code == 200
         request_id = response.json['request_id']
         with client.application.app_context():
-            saved_obj = TransformRequest.return_request(request_id)
+            saved_obj = TransformRequest.lookup(request_id)
             assert saved_obj
             assert saved_obj.title == title

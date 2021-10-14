@@ -25,6 +25,8 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+from datetime import datetime
+
 from tests.resource_test_base import ResourceTestBase
 
 
@@ -35,7 +37,7 @@ class TestTransformStatus(ResourceTestBase):
         mock_request.save_to_db = mocker.Mock()
         mocker.patch.object(
             TransformRequest,
-            'return_request',
+            'lookup',
             return_value=mock_request)
 
         response = client.post('/servicex/internal/transformation/1234/status',
@@ -54,7 +56,7 @@ class TestTransformStatus(ResourceTestBase):
         mock_request.save_to_db = mocker.Mock()
         mocker.patch.object(
             TransformRequest,
-            'return_request',
+            'lookup',
             return_value=mock_request)
 
         response = client.post('/servicex/internal/transformation/1234/status',
@@ -65,6 +67,7 @@ class TestTransformStatus(ResourceTestBase):
                                })
 
         assert response.status_code == 200
+        assert mock_request.finish_time is not None
         mock_request.save_to_db.assert_called()
 
     def test_post_status_bad_data(self, client):
@@ -90,16 +93,22 @@ class TestTransformStatus(ResourceTestBase):
         })
         servicex.models.TransformRequest.statistics = mock_statistics
 
+        fake_transform_request = self._generate_transform_request()
+        fake_transform_request.finish_time = datetime.max
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
-            return_value=self._generate_transform_request())
+            'lookup',
+            return_value=fake_transform_request
+        )
 
         response = client.get('/servicex/transformation/1234/status')
         assert response.status_code == 200
+        iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
         assert response.json == {
-            "status": "Submitted",
-            'request-id': '1234',
+            "status": fake_transform_request.status,
+            'request-id': "1234",
+            "submit-time": fake_transform_request.submit_time.strftime(iso_fmt),
+            "finish-time": fake_transform_request.finish_time.strftime(iso_fmt),
             'files-processed': mock_files_processed.return_value,
             'files-remaining': mock_files_remaining.return_value,
             'files-skipped': mock_files_failed.return_value,
@@ -117,7 +126,7 @@ class TestTransformStatus(ResourceTestBase):
 
         mock_transform_request_read = mocker.patch.object(
             servicex.models.TransformRequest,
-            'return_request',
+            'lookup',
             return_value=None)
 
         response = client.get('/servicex/transformation/1234/status')
