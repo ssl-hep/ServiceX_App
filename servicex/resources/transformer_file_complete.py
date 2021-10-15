@@ -25,7 +25,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import logging
 from datetime import datetime, timezone
 
 from flask import request, current_app
@@ -35,15 +34,6 @@ from servicex.resources.servicex_resource import ServiceXResource
 
 
 class TransformerFileComplete(ServiceXResource):
-    def __init__(self):
-        """
-        Initialize object
-        """
-        super().__init__()
-        logger = logging.getLogger(__name__)
-        logger.addHandler(logging.NullHandler())
-        self.logger = logger
-
     @classmethod
     def make_api(cls, transformer_manager):
         cls.transformer_manager = transformer_manager

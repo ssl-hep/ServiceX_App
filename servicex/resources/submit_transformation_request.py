@@ -26,7 +26,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import json
-import logging
 import uuid
 from datetime import datetime, timezone
 
@@ -53,15 +52,6 @@ def _workflow_name(transform_request):
 
 
 class SubmitTransformationRequest(ServiceXResource):
-    def __init__(self):
-        """
-        Initialize object
-        """
-        super().__init__()
-        logger = logging.getLogger(__name__)
-        logger.addHandler(logging.NullHandler())
-        self.logger = logger
-
     @classmethod
     def make_api(cls, rabbitmq_adaptor, object_store,
                  code_gen_service, lookup_result_processor, docker_repo_adapter):
@@ -126,6 +116,7 @@ class SubmitTransformationRequest(ServiceXResource):
                 )
                 if parsed_did.scheme not in config['VALID_DID_SCHEMES']:
                     msg = f"DID scheme is not supported: {parsed_did.scheme}"
+                    self.logger.warning(msg)
                     return {'message': msg}, 400
 
             if self.object_store and \
@@ -142,6 +133,7 @@ class SubmitTransformationRequest(ServiceXResource):
             if config['TRANSFORMER_VALIDATE_DOCKER_IMAGE']:
                 if not self.docker_repo_adapter.check_image_exists(image):
                     msg = f"Requested transformer docker image doesn't exist: {image}"
+                    self.logger.error(msg)
                     return {'message': msg}, 400
 
             user = self.get_requesting_user()
@@ -241,12 +233,12 @@ class SubmitTransformationRequest(ServiceXResource):
                 "request_id": str(request_id)
             }
         except BadRequest as bad_request:
-            self.logger.error(f'The json request was malformed: {str(bad_request)}')
             msg = f'The json request was malformed: {str(bad_request)}'
+            self.logger.error(msg)
             return {'message': msg}, 400
         except ValueError as eek:
             self.logger.exception("Failed to submit transform request")
             return {'message': f'Failed to submit transform request: {str(eek)}'}, 400
         except Exception:
-            self.logger.exception("Got exception while submitting transoformation request")
+            self.logger.exception("Got exception while submitting transformation request")
             return {'message': 'Something went wrong'}, 500

@@ -25,9 +25,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import sys
-import traceback
-
 from flask import request
 
 from servicex.models import TransformRequest, DatasetFile
@@ -62,8 +59,6 @@ class AddFileToDataset(ServiceXResource):
                 "file-id": db_record.id
             }
 
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            traceback.print_tb(exc_traceback, limit=20, file=sys.stdout)
-            print(exc_value)
-            return {'message': 'Something went wrong: ' + str(exc_value)}, 500
+        except Exception as e:
+            self.logger.exception("Exception occurred when adding file to dataset")
+            return {'message': 'Something went wrong: ' + e}, 500

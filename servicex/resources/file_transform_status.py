@@ -25,7 +25,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import logging
 import datetime
 
 from flask_restful import reqparse
@@ -37,6 +36,7 @@ from servicex.models import FileStatus, max_string_size
 class FileTransformationStatus(ServiceXResource):
 
     def __init__(self):
+        super().__init__()
         self.status_parser = reqparse.RequestParser()
         self.status_parser.add_argument('timestamp', help='This field cannot be blank',
                                         required=True)
@@ -44,10 +44,6 @@ class FileTransformationStatus(ServiceXResource):
                                         required=True)
         self.status_parser.add_argument('pod-name', required=False)
         self.status_parser.add_argument('info', required=False)
-
-        logger = logging.getLogger(__name__)
-        logger.addHandler(logging.NullHandler())
-        self.logger = logger
 
     def post(self, request_id, file_id):
         status = self.status_parser.parse_args()

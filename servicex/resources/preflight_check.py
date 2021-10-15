@@ -25,8 +25,6 @@
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-import logging
-
 from flask import request
 
 from servicex.models import TransformRequest
@@ -34,15 +32,6 @@ from servicex.resources.servicex_resource import ServiceXResource
 
 
 class PreflightCheck(ServiceXResource):
-    def __init__(self):
-        """
-        Initialize object
-        """
-        super().__init__()
-        logger = logging.getLogger(__name__)
-        logger.addHandler(logging.NullHandler())
-        self.logger = logger
-
     @classmethod
     def make_api(cls, lookup_result_processor):
         cls.lookup_result_processor = lookup_result_processor
