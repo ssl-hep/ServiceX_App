@@ -36,15 +36,6 @@ from servicex.resources.servicex_resource import ServiceXResource
 
 
 class AddFileToDataset(ServiceXResource):
-    def __init__(self):
-        """
-        Initialize object
-        """
-        super().__init__()
-        logger = logging.getLogger(__name__)
-        logger.addHandler(logging.NullHandler())
-        self.logger = logger
-
     @classmethod
     def make_api(cls, lookup_result_processor):
         cls.lookup_result_processor = lookup_result_processor
