@@ -37,7 +37,7 @@ def dashboard(template_name: str, user_specific=False):
         query = query.filter_by(submitted_by=session["user_id"])
     pagination: Pagination = query \
         .order_by(getattr(model_attributes[sort], order)()) \
-        .paginate(page=page, per_page=25, error_out=False)
+        .paginate(page=page, per_page=15, error_out=False)
     return render_template(
         template_name,
         pagination=pagination,
