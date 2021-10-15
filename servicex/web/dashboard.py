@@ -1,6 +1,6 @@
 import itertools
 
-from flask import render_template, request, session
+from flask import render_template, session
 from flask_restful import reqparse
 from flask_sqlalchemy import Pagination
 
@@ -12,6 +12,7 @@ model_attributes = {
     "status": TransformRequest.status
 }
 parser = reqparse.RequestParser()
+parser.add_argument("page", default=1, type=int)
 sort_choices = tuple(model_attributes.keys())
 parser.add_argument(
     "sort",
@@ -29,7 +30,6 @@ parser.add_argument(
 
 
 def dashboard(template_name: str, user_specific=False):
-    page = request.args.get('page', default=1, type=int)
     args = parser.parse_args()
     sort, order = args["sort"], args["order"]
     query = TransformRequest.query
@@ -37,7 +37,7 @@ def dashboard(template_name: str, user_specific=False):
         query = query.filter_by(submitted_by=session["user_id"])
     pagination: Pagination = query \
         .order_by(getattr(model_attributes[sort], order)()) \
-        .paginate(page=page, per_page=15, error_out=False)
+        .paginate(page=args["page"], per_page=15, error_out=False)
     return render_template(
         template_name,
         pagination=pagination,
