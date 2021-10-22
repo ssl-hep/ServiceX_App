@@ -41,7 +41,7 @@ def load_requirements(fname):
 
 setup(
     name='servicex_app',
-    version='1.0.0-RC.3',
+    version='1.0.0-RC.4',
     url='https://iris-hep.org',
     license='BSD',
     maintainer='ServiceX Team',
