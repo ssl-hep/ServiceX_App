@@ -147,3 +147,11 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     TransformerFileComplete.make_api(transformer_manager)
     api.add_resource(TransformerFileComplete,
                      '/servicex/internal/transformation/<string:request_id>/file-complete')
+
+    StorageManager.make_api(storage_manager)
+    api.add_resource(StorageManager,
+                     '/servicex/internal/storage/<string:bucket_id>')
+    api.add_resource(StorageManager,
+                     '/servicex/internal/storage/<string:bucket_id>/<string:object_name>')
+    api.add_resource(StorageManager,
+                     '/servicex/internal/storage/cleanup')
