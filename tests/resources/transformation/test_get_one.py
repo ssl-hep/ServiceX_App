@@ -18,7 +18,7 @@ class TestTransformationRequest(ResourceTestBase):
                                  'tree-name': "Events",
                                  'image': 'ssl-hep/foo:latest',
                                  'workers': 42,
-                                 'result-destination': 'object-store',
+                                 'result-destination': None,
                                  'result-format': 'arrow',
                                  'workflow-name': None,
                                  'generated-code-cm': None,
