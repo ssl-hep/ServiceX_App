@@ -92,6 +92,10 @@ class TestTransformerManager(ResourceTestBase):
 
         transformer = TransformerManager('external-kubernetes')
         cfg = {
+            'OBJECT_STORE_ENABLED': True,
+            'MINIO_URL_TRANSFORMER': 'rolling-snail-minio:9000',
+            'MINIO_ACCESS_KEY': 'itsame',
+            'MINIO_SECRET_KEY': 'shhh',
             'TRANSFORMER_CPU_LIMIT': 4,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_MIN_REPLICAS': 3,
@@ -151,6 +155,10 @@ class TestTransformerManager(ResourceTestBase):
 
         transformer = TransformerManager('external-kubernetes')
         cfg = {
+            'OBJECT_STORE_ENABLED': True,
+            'MINIO_URL_TRANSFORMER': 'rolling-snail-minio:9000',
+            'MINIO_ACCESS_KEY': 'itsame',
+            'MINIO_SECRET_KEY': 'shhh',
             'TRANSFORMER_AUTOSCALE_ENABLED': False,
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
@@ -182,6 +190,10 @@ class TestTransformerManager(ResourceTestBase):
                             return_value=mock_autoscaling)
 
         additional_config = {
+            'OBJECT_STORE_ENABLED': True,
+            'MINIO_URL_TRANSFORMER': 'rolling-snail-minio:9000',
+            'MINIO_ACCESS_KEY': 'itsame',
+            'MINIO_SECRET_KEY': 'shhh',
             'TRANSFORMER_LOCAL_PATH': '/tmp/foo',
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
@@ -220,6 +232,10 @@ class TestTransformerManager(ResourceTestBase):
 
         transformer = TransformerManager('external-kubernetes')
         cfg = {
+            'OBJECT_STORE_ENABLED': True,
+            'MINIO_URL_TRANSFORMER': 'rolling-snail-minio:9000',
+            'MINIO_ACCESS_KEY': 'itsame',
+            'MINIO_SECRET_KEY': 'shhh',
             'TRANSFORMER_CPU_LIMIT': 1,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
         }
@@ -383,6 +399,10 @@ class TestTransformerManager(ResourceTestBase):
 
         transformer = TransformerManager('external-kubernetes')
         cfg = {
+            'OBJECT_STORE_ENABLED': True,
+            'MINIO_URL_TRANSFORMER': 'rolling-snail-minio:9000',
+            'MINIO_ACCESS_KEY': 'itsame',
+            'MINIO_SECRET_KEY': 'shhh',
             'TRANSFORMER_CPU_LIMIT': 4,
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_MIN_REPLICAS': 3,

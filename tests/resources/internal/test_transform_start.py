@@ -65,7 +65,7 @@ class TestTransformationStart(ResourceTestBase):
                                 generated_code_cm=None,
                                 rabbitmq_uri='amqp://trans.rabbit',
                                 namespace='my-ws',
-                                result_destination='object-store',
+                                result_destination=None,
                                 result_format='arrow',
                                 x509_secret='my-x509-secret')
         mock_request.save_to_db.assert_called()
