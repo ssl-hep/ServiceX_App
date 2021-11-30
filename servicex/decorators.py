@@ -40,10 +40,18 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
             return fn(*args, **kwargs)
         elif session.get('is_authenticated'):
             return fn(*args, **kwargs)
+
+        # Check for an access token
         try:
             verify_jwt_in_request()
         except NoAuthorizationError as exc:
             return make_response({'message': str(exc)}, 401)
+
+        # If user management is disabled, we are done
+        if current_app.config.get('DISABLE_USER_MGMT'):
+            return fn(*args, **kwargs)
+
+        # Otherwise, check that the user still exists and is not pending
         user = UserModel.find_by_sub(get_jwt_identity())
         if not user:
             msg = 'Not Authorized: No user found matching this API token. ' \
@@ -60,6 +68,7 @@ def auth_required(fn: Callable[..., Response]) -> Callable[..., Response]:
     return inner
 
 
+# Todo - Replace this with a parameterized decorator: @auth_required(admin=True)
 def admin_required(fn: Callable[..., Response]) -> Callable[..., Response]:
     """Mark an API resource as requiring administrator role."""
 
@@ -73,10 +82,15 @@ def admin_required(fn: Callable[..., Response]) -> Callable[..., Response]:
                 return fn(*args, **kwargs)
             else:
                 return make_response({'message': msg}, 401)
+
         try:
             verify_jwt_in_request()
         except NoAuthorizationError as exc:
             return make_response({'message': str(exc)}, 401)
+
+        if current_app.config.get('DISABLE_USER_MGMT'):
+            return fn(*args, **kwargs)
+
         user = UserModel.find_by_sub(get_jwt_identity())
         if not (user and user.admin):
             return make_response({'message': msg}, 401)

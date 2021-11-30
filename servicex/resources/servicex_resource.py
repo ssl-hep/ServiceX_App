@@ -53,14 +53,15 @@ class ServiceXResource(Resource):
     @staticmethod
     def get_requesting_user() -> Optional[UserModel]:
         """
-        :return: User who submitted request for resource.
-        If auth is enabled, this cannot be None for JWT-protected resources
-        which are decorated with @auth_required or @admin_required.
+        :return: ServiceX user who submitted request for resource.
+        Returns None if auth or user management is disabled.
         """
-        user = None
-        if current_app.config.get('ENABLE_AUTH'):
-            user = UserModel.find_by_sub(get_jwt_identity())
-        return user
+        config = current_app.config
+        if not config.get('ENABLE_AUTH') or config.get('DISABLE_USER_MGMT'):
+            return None
+        sub = get_jwt_identity()
+        if sub is not None:
+            return UserModel.find_by_sub(sub)
 
     @classmethod
     def _get_app_version(cls):

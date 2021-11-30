@@ -34,12 +34,12 @@
       <div class="collapse navbar-collapse" id="navbarToggle">
         <div class="navbar-nav mr-auto">
           <a class="nav-item nav-link" href="{{ config['DOCS_BASE_URL'] }}">Docs</a>
-        {% if not config['ENABLE_AUTH'] %}
+        {% if not config['ENABLE_AUTH'] or config['DISABLE_USER_MGMT'] %}
           <a href="{{ url_for('global-dashboard') }}" class="nav-item nav-link">Dashboard</a>
         {% endif %}
         </div>
         <!-- Navbar Right Side -->
-        {% if config['ENABLE_AUTH'] %}
+        {% if config['ENABLE_AUTH'] and not config['DISABLE_USER_MGMT'] %}
           <div class="navbar-nav">
           {% if not session['is_authenticated'] %}
             <a href="{{ url_for('sign_in') }}" class="nav-item nav-link">Sign In</a>

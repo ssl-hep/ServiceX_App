@@ -15,10 +15,19 @@ services:
 
 User Management
 ---------------
-If ``ENABLE_AUTH`` is set to True, an identity management system will be
-enabled. Users will need to create accounts in order to make requests.
+If ``ENABLE_AUTH`` is set to True and `DISABLE_USER_MGMT` is False,
+an identity management system will be enabled.
+Users will need to create accounts in order to make requests.
 The system consists of two components: authentication (verification of each
 user's identity) and authorization (control of access to API resources).
+
+If ``ENABLE_AUTH`` and ``DISABLE_USER_MGMT`` are both set to True, then you
+will need to generate your own JWT refresh tokens externally using
+``JWT_SECRET_KEY``, and provide them to end users. 
+The payload must contain :code:`"type": "refresh"` and an :code:`identity` claim 
+(Flask-JWT-extended 
+`deviates <https://github.com/vimalloc/flask-jwt-extended/issues/264#issuecomment-517929886>`__ 
+from the standard :code:`sub` claim).
 
 Authentication
 **************
