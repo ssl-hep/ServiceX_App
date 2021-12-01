@@ -86,7 +86,13 @@ def create_app(test_config=None,
 
         if app.config['OBJECT_STORE_ENABLED']:
             if not provided_object_store:
-                use_https = strtobool(app.config['MINIO_SECURED'])
+                if 'MINIO_SECURED' in app.config:
+                    if isinstance(app.config['MINIO_SECURED'], bool):
+                        use_https = app.config['MINIO_SECURED']
+                    else:
+                        use_https = strtobool(app.config['MINIO_SECURED'])
+                else:
+                    use_https = False
                 object_store = ObjectStoreManager(app.config['MINIO_URL'],
                                                   username=app.config['MINIO_ACCESS_KEY'],
                                                   password=app.config['MINIO_SECRET_KEY'],
