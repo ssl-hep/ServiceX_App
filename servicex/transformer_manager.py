@@ -115,7 +115,7 @@ class TransformerManager:
                 sys.stderr.write("Adding minio secured var\n")
                 env = env + [client.V1EnvVar(name='MINIO_SECURED',
                                              value=str(current_app.config['MINIO_SECURED']))]
-                sys.stderr.write(f"env = {env}\n")
+                sys.stderr.write(f"env = {env}\n ")
             else:
                 sys.stderr.write("Not adding minio secured var\n")
                 sys.stderr.write(f"env = {env}\n")
