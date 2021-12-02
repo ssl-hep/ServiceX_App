@@ -112,13 +112,13 @@ class TransformerManager:
                                 value=current_app.config['MINIO_SECRET_KEY']),
             ]
             if 'MINIO_SECURED' in current_app.config:
-                sys.stderr.write("Adding minio secured var")
+                sys.stderr.write("Adding minio secured var\n")
                 env = env + [client.V1EnvVar(name='MINIO_SECURED',
-                                             value=current_app.config['MINIO_SECURED'])]
-                sys.stderr.write(f"env = {env}")
+                                             value=str(current_app.config['MINIO_SECURED']))]
+                sys.stderr.write(f"env = {env}\n")
             else:
-                sys.stderr.write("Not adding minio secured var")
-                sys.stderr.write(f"env = {env}")
+                sys.stderr.write("Not adding minio secured var\n")
+                sys.stderr.write(f"env = {env}\n")
 
         if result_destination == 'volume':
             TransformerManager.create_posix_volume(volumes, volume_mounts)
