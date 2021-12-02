@@ -28,6 +28,7 @@
 import os
 
 import base64
+import sys
 from typing import Optional
 
 import kubernetes
@@ -111,8 +112,13 @@ class TransformerManager:
                                 value=current_app.config['MINIO_SECRET_KEY']),
             ]
             if 'MINIO_SECURED' in current_app.config:
+                sys.stderr.write("Adding minio secured var")
                 env += [client.V1EnvVar(name='MINIO_SECURED',
                                         value=current_app.config['MINIO_SECURED'])]
+                sys.stderr.write(f"env = {env}")
+            else:
+                sys.stderr.write("Not adding minio secured var")
+                sys.stderr.write(f"env = {env}")
 
         if result_destination == 'volume':
             TransformerManager.create_posix_volume(volumes, volume_mounts)
