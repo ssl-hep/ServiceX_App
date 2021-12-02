@@ -109,9 +109,10 @@ class TransformerManager:
                                 value=current_app.config['MINIO_ACCESS_KEY']),
                 client.V1EnvVar(name='MINIO_SECRET_KEY',
                                 value=current_app.config['MINIO_SECRET_KEY']),
-                client.V1EnvVar(name='MINIO_SECURED',
-                                value=current_app.config['MINIO_SECURED']),
             ]
+            if 'MINIO_SECURED' in current_app.config:
+                env += [client.V1EnvVar(name='MINIO_SECURED', value=current_app.config['MINIO_SECURED'])]
+
 
         if result_destination == 'volume':
             TransformerManager.create_posix_volume(volumes, volume_mounts)
