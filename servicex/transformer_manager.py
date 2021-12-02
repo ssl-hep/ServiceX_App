@@ -109,6 +109,8 @@ class TransformerManager:
                                 value=current_app.config['MINIO_ACCESS_KEY']),
                 client.V1EnvVar(name='MINIO_SECRET_KEY',
                                 value=current_app.config['MINIO_SECRET_KEY']),
+                client.V1EnvVar(name='MINIO_SECURED',
+                                value=current_app.config['MINIO_SECURED']),
             ]
 
         if result_destination == 'volume':
