@@ -108,7 +108,6 @@ class SubmitTransformationRequest(ServiceXResource):
             # did xor file_list
             if bool(did) == bool(file_list):
                 raise BadRequest("Must provide did or file-list but not both")
-            print("aaaa")
             if did:
                 parsed_did = DIDParser(
                     did, default_scheme=config['DID_FINDER_DEFAULT_SCHEME']
@@ -118,11 +117,11 @@ class SubmitTransformationRequest(ServiceXResource):
                     self.logger.warning(msg)
                     return {'message': msg}, 400
 
-            print("bbbb")
             if self.object_store and \
                     args['result-destination'] == \
                     TransformRequest.OBJECT_STORE_DEST:
                 self.object_store.create_bucket(request_id)
+                # TODO: need to check to make sure bucket was created
                 # WHat happens if object-store and object_store is None?
 
             if args['result-destination'] == TransformRequest.KAFKA_DEST:
@@ -130,7 +129,6 @@ class SubmitTransformationRequest(ServiceXResource):
             else:
                 broker = None
 
-            print("ccc")
             if config['TRANSFORMER_VALIDATE_DOCKER_IMAGE']:
                 if not self.docker_repo_adapter.check_image_exists(image):
                     msg = f"Requested transformer docker image doesn't exist: {image}"
@@ -138,7 +136,6 @@ class SubmitTransformationRequest(ServiceXResource):
                     return {'message': msg}, 400
 
             user = self.get_requesting_user()
-            print("ddd")
             request_rec = TransformRequest(
                 request_id=str(request_id),
                 title=args.get("title"),
@@ -160,7 +157,6 @@ class SubmitTransformationRequest(ServiceXResource):
                 code_gen_image=config['CODE_GEN_IMAGE']
             )
 
-            print("eee")
             # If we are doing the xaod_cpp workflow, then the first thing to do is make
             # sure the requested selection is correct, and generate the C++ files
             if request_rec.workflow_name == 'selection_codegen':
@@ -242,6 +238,6 @@ class SubmitTransformationRequest(ServiceXResource):
         except ValueError as eek:
             self.logger.exception("Failed to submit transform request")
             return {'message': f'Failed to submit transform request: {str(eek)}'}, 400
-        except Exception as e:
-            self.logger.exception(f"Got exception while submitting transformation request: {e}")
+        except Exception:
+            self.logger.exception(f"Got exception while submitting transformation request")
             return {'message': 'Something went wrong'}, 500
