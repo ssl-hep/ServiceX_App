@@ -227,7 +227,7 @@ class SubmitTransformationRequest(ServiceXResource):
 
                 db.session.commit()
 
-            self.logger.info(f"Transoformation request submitted with id: {request_id}")
+            self.logger.info(f"Transformation request submitted with id: {request_id}")
             return {
                 "request_id": str(request_id)
             }

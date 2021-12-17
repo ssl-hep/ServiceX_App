@@ -114,7 +114,7 @@ class TransformerManager:
                 client.V1EnvVar(name='MINIO_ACCESS_KEY',
                                 value=current_app.config['MINIO_ACCESS_KEY']),
                 client.V1EnvVar(name='MINIO_SECRET_KEY',
-                                value=str(current_app.config['MINIO_SECRET_KEY'])),
+                                value=current_app.config['MINIO_SECRET_KEY']),
             ]
             if 'MINIO_SECURED' in current_app.config:
                 env += [client.V1EnvVar(name='MINIO_SECURED',
