@@ -56,7 +56,7 @@ class TestTransformErrors(ResourceTestBase):
         assert response.status_code == 200
         assert response.json == {'errors': [
             {'pod-name': 'openthepodhal',
-             'file': '/foo.bar/baz.root',
+             'file': '/foo/bar1.root',
              'events': 42,
              'info': "sorry I can't"
              }
