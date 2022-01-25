@@ -40,7 +40,7 @@ class TestTransformErrors(ResourceTestBase):
 
         file_error_result = [
             (DatasetFile(
-                file_path="/foo.bar/baz.root",
+                paths=["/foo/bar1.root", "/foo/bar2.root"],
                 file_events=42
             ), FileStatus(
                 pod_name='openthepodhal',

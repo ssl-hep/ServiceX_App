@@ -52,7 +52,7 @@ class TestLookupResutProcessor(ResourceTestBase):
         processor = LookupResultProcessor(mock_rabbit_adaptor,
                                           "http://cern.analysis.ch:5000/")
         dataset_file = DatasetFile(request_id="BR549",
-                                   file_path="/foo/bar.root",
+                                   paths=["/foo/bar1.root", "/foo/bar2.root"],
                                    adler32='12345',
                                    file_size=1024,
                                    file_events=500)
