@@ -20,7 +20,7 @@ def upgrade():
     op.drop_column('files', 'file_path')
     op.add_column('files', sa.Column('paths', sa.Text()))
     op.execute(
-        'UPDATE "files" SET paths = file_path'
+        'UPDATE "files" SET paths = "old"'
     )
     op.alter_column('files', 'paths', nullable=False)
 
