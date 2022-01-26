@@ -26,9 +26,6 @@ def upgrade():
         # Other columns not needed for the data migration
     )
     op.execute(
-        'UPDATE files SET paths = "old"'
-    )
-    op.execute(
         files_table
         .update()
         .values({'paths': 'old'})
