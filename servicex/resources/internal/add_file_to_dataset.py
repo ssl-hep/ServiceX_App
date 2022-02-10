@@ -41,6 +41,7 @@ class AddFileToDataset(ServiceXResource):
         try:
             from servicex.models import db
             add_file_request = request.get_json()
+            print("ADDING FILE R.", add_file_request)
             submitted_request = TransformRequest.lookup(request_id)
             self.logger.info(f"Submitted request: {submitted_request} for {request_id}")
             db_record = DatasetFile(request_id=request_id,
