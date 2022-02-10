@@ -30,7 +30,7 @@ import sys
 
 import os
 from flask import Flask
-from flask_bootstrap import Bootstrap
+from flask_bootstrap import Bootstrap5
 from flask_jwt_extended import (JWTManager)
 from flask_restful import Api
 
@@ -68,7 +68,7 @@ def create_app(test_config=None,
                provided_docker_repo_adapter=None):
     """Create and configure an instance of the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
-    Bootstrap(app)
+    Bootstrap5(app)
 
     JWTManager(app)
     if not test_config:
@@ -86,11 +86,11 @@ def create_app(test_config=None,
 
         if app.config['OBJECT_STORE_ENABLED']:
             if not provided_object_store:
-                if 'MINIO_SECURED' in app.config:
-                    if isinstance(app.config['MINIO_SECURED'], bool):
-                        use_https = app.config['MINIO_SECURED']
+                if 'MINIO_ENCRYPT' in app.config:
+                    if isinstance(app.config['MINIO_ENCRYPT'], bool):
+                        use_https = app.config['MINIO_ENCRYPT']
                     else:
-                        use_https = strtobool(app.config['MINIO_SECURED'])
+                        use_https = strtobool(app.config['MINIO_ENCRYPT'])
                 else:
                     use_https = False
                 object_store = ObjectStoreManager(app.config['MINIO_URL'],
