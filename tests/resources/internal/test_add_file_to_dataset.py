@@ -106,7 +106,7 @@ class TestAddFileToDataset(ResourceTestBase):
 
         response = client.put('/servicex/internal/transformation/1234/files',
                               json={
-                                  'paths': {"/foo/bar1.root", "/foo/bar2.root"},
+                                  'paths': [123, 123],
                                   'adler32': '12345',
                                   'file_size': 1024,
                                   'file_events': 500
