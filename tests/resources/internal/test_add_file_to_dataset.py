@@ -113,4 +113,4 @@ class TestAddFileToDataset(ResourceTestBase):
                               })
         assert response.status_code == 500
         assert response.json == {
-            'message': 'Something went wrong: sequence item 0: expected str instance, int '}
+            'message': 'Something went wrong: sequence item 0: expected str instance, int found'}
