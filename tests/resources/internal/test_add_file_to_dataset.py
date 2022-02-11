@@ -112,4 +112,5 @@ class TestAddFileToDataset(ResourceTestBase):
                                   'file_events': 500
                               })
         assert response.status_code == 500
-        assert response.json == {'message': 'Something went wrong: Test'}
+        assert response.json == {
+            'message': 'Something went wrong: sequence item 0: expected str instance, int '}
