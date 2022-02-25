@@ -31,7 +31,6 @@ import random
 import logging
 
 import pika
-from flask import current_app
 
 
 class RabbitAdaptor(object):
@@ -50,7 +49,6 @@ class RabbitAdaptor(object):
         logger = logging.getLogger(__name__)
         logger.addHandler(logging.NullHandler())
         self.logger = logger
-
 
     def connect(self):
         """This method connects to RabbitMQ, returning the connection handle.
