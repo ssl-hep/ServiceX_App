@@ -26,7 +26,7 @@ body {
 }
 
 .component_versions {
-  width: 50%;
+  /* width: 50%; */
   border: none;
   padding: 5px;
 }
@@ -39,6 +39,5 @@ body {
 
 .component_versions td {
   border: none;
-  text-align: center;
   padding: 5px;
 }
