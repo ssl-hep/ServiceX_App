@@ -86,7 +86,6 @@
       return fetch(document.location.origin + `/servicex/transformation/${req_id}/deployment-status`)
         .then((resp) => resp.json())
         .then((data) => {
-          { #console.log(`${req_id} deployment`, data);# }
           $(`#replicas-${req_id}`).text(data["replicas"]);
         });
     }));
