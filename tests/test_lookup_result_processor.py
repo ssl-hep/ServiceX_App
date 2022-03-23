@@ -59,9 +59,9 @@ class TestLookupResultProcessor(ResourceTestBase):
                  "columns": 'electron.eta(), muon.pt()',
                  "file-path": "/foo/bar.root",
                  "tree-name": "Events",
-                 "chunk-size": "1000",
                  "service-endpoint":
                      "http://cern.analysis.ch:5000/servicex/internal/transformation/BR549",
+                 "chunk-size": "1000",
                  'result-destination': 'object-store'
                  }))
 
