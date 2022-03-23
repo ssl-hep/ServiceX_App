@@ -60,6 +60,20 @@ class TransformerManager:
         volume_mounts = []
         volumes = []
 
+        # append sidecar volume
+        output_path = current_app.config['TRANSFORMER_SIDECAR_VOLUME_PATH']
+        volume_mounts.append(
+            client.V1VolumeMount(
+                name='sidecar-volume',
+                mount_path=output_path)
+        )
+
+        volumes.append(
+            client.V1Volume(
+                name='sidecar-volume',
+                empty_dir=client.V1EmptyDirVolumeSource())
+        )
+
         if x509_secret:
             volume_mounts.append(
                 client.V1VolumeMount(
@@ -125,8 +139,10 @@ class TransformerManager:
 
         if x509_secret:
             python_args = ["/servicex/proxy-exporter.sh & sleep 5 && "]
+            mngr_args = ["/servicex/proxy-exporter.sh & sleep 5 && "]
         else:
             python_args = [" "]
+            mngr_args = [" "]
 
         python_args[0] += "PYTHONPATH=/generated:$PYTHONPATH " + \
                           "python /servicex/transformer.py " + \
@@ -134,6 +150,14 @@ class TransformerManager:
                           " --rabbit-uri " + rabbitmq_uri + \
                           " --result-destination " + result_destination + \
                           " --result-format " + result_format
+
+        watch_path = os.path.join(current_app.config['TRANSFORMER_SIDECAR_VOLUME_PATH'],
+                                  request_id)
+        mngr_args[0] += "PYTHONPATH=/generated:$PYTHONPATH " + \
+                        "bash /generated/watch.sh " + \
+                        "{TL} ".format(TL=current_app.config['TRANSFORMER_LANGUAGE']) + \
+                        "{TC} ".format(TC=current_app.config['TRANSFORMER_EXEC']) + \
+                        watch_path
 
         if result_destination == 'volume':
             python_args[0] += " --output-dir " + os.path.join(
@@ -143,6 +167,19 @@ class TransformerManager:
         resources = client.V1ResourceRequirements(
             limits={"cpu": current_app.config['TRANSFORMER_CPU_LIMIT']}
         )
+
+        # Configure Pod template container
+        sidecar = client.V1Container(
+            name="transformer-sidecar-" + request_id,
+            image=current_app.config['TRANSFORMER_SCIENCE_IMAGE'],
+            image_pull_policy=current_app.config['TRANSFORMER_PULL_POLICY'],
+            volume_mounts=volume_mounts,
+            command=["bash", "-c"],
+            env=env,
+            args=mngr_args,
+            resources=resources
+        )
+
         # Configure Pod template container
         container = client.V1Container(
             name="transformer-" + request_id,
@@ -154,14 +191,13 @@ class TransformerManager:
             args=python_args,
             resources=resources
         )
-
         # Create and Configure a spec section
         template = client.V1PodTemplateSpec(
             metadata=client.V1ObjectMeta(labels={'app': "transformer-" + request_id}),
             spec=client.V1PodSpec(
                 restart_policy="Always",
                 priority_class_name=current_app.config.get('TRANSFORMER_PRIORITY_CLASS', None),
-                containers=[container],
+                containers=[container, sidecar],
                 volumes=volumes))
 
         # Create the specification of deployment
