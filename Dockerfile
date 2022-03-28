@@ -11,6 +11,7 @@ ADD Pipfile.lock Pipfile /home/servicex/
 
 WORKDIR /home/servicex
 RUN /root/.local/bin/pipenv sync
+RUN /root/.local/bin/pipenv install gunicorn
 
 FROM python:3.7 AS runtime
 
@@ -26,7 +27,7 @@ COPY setup.py setup.py
 COPY setup.cfg setup.cfg
 #COPY requirements.txt requirements.txt
 #RUN pip install -e .
-RUN pip install gunicorn
+#RUN pipenv install gunicorn
 
 COPY *.py docker-dev.conf boot.sh ./
 COPY servicex/ ./servicex

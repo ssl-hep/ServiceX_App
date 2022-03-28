@@ -7,4 +7,4 @@ else
   FLASK_APP=servicex/app.py flask db upgrade;
 fi
 
-exec gunicorn -b :5000 --workers=5 --threads=1 --timeout 120 --access-logfile - --error-logfile - "servicex:create_app()"
+pipenv shell gunicorn -b :5000 --workers=5 --threads=1 --timeout 120 --access-logfile - --error-logfile - "servicex:create_app()"
