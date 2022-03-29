@@ -21,7 +21,7 @@ globus_sdk = "2.0.1"
 cryptography = "1.6.0"
 bootstrap-flask = "2.0.1"
 humanize = "3.5.0"
-MarkupSafe = "2.0.1"
+MarkupSafe = "==2.0.1"
 
 [dev-packages]
 coverage = "5.5"

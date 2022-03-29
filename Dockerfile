@@ -17,7 +17,7 @@ FROM python:3.7 AS runtime
 
 RUN useradd -ms /bin/bash servicex
 
-COPY --from=builder /home/servicex/.venv /home/servicex/venv
+COPY --from=builder /home/servicex/.venv /home/servicex/.venv
 
 WORKDIR /home/servicex
 RUN mkdir ./servicex
@@ -40,4 +40,4 @@ RUN chmod +x boot.sh
 USER servicex
 
 EXPOSE 5000
-ENTRYPOINT ["./boot.sh"]
+#ENTRYPOINT ["./boot.sh"]
