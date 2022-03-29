@@ -118,7 +118,7 @@ class TestTransformerManager(ResourceTestBase):
                 generated_code_cm=None)
             called_deployment = mock_api.mock_calls[1][2]['body']
             assert called_deployment.spec.replicas == cfg['TRANSFORMER_MIN_REPLICAS']
-            assert len(called_deployment.spec.template.spec.containers) == 1
+            assert len(called_deployment.spec.template.spec.containers) == 2
             container = called_deployment.spec.template.spec.containers[0]
             assert container.image == 'sslhep/servicex-transformer:pytest'
             assert container.image_pull_policy == 'Always'
@@ -230,8 +230,8 @@ class TestTransformerManager(ResourceTestBase):
             assert container.volume_mounts[1].mount_path == '/etc/grid-security-ro'
             assert called_job.spec.template.spec.volumes[1].secret.secret_name == 'x509'
 
-            assert container.volume_mounts[1].mount_path == '/data'
-            assert called_job.spec.template.spec.volumes[1].host_path.path == '/tmp/foo'
+            assert container.volume_mounts[2].mount_path == '/data'
+            assert called_job.spec.template.spec.volumes[2].host_path.path == '/tmp/foo'
 
     def test_launch_transformer_jobs_with_generated_code(self, mocker):
         import kubernetes
@@ -503,8 +503,8 @@ class TestTransformerManager(ResourceTestBase):
             called_deployment = mock_api.mock_calls[1][2]['body']
             assert len(called_deployment.spec.template.spec.containers) == 2
             container = called_deployment.spec.template.spec.containers[0]
-            assert len(container.volume_mounts) == 0
-            assert len(called_deployment.spec.template.spec.volumes) == 0
+            assert len(container.volume_mounts) == 1
+            assert len(called_deployment.spec.template.spec.volumes) == 1
             args = container.args
             assert not args[0].startswith('/servicex/proxy-exporter.sh & sleep 5 && ')
 
