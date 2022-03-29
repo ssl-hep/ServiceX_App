@@ -122,9 +122,9 @@ class TestTransformerManager(ResourceTestBase):
             container = called_deployment.spec.template.spec.containers[0]
             assert container.image == 'sslhep/servicex-transformer:pytest'
             assert container.image_pull_policy == 'Always'
-            assert len(container.volume_mounts) == 1
-            assert container.volume_mounts[0].name == 'x509-secret'
-            assert container.volume_mounts[0].mount_path == '/etc/grid-security-ro'
+            assert len(container.volume_mounts) == 2
+            assert container.volume_mounts[1].name == 'x509-secret'
+            assert container.volume_mounts[1].mount_path == '/etc/grid-security-ro'
             args = container.args
 
             assert args[0].startswith('/servicex/proxy-exporter.sh & sleep 5 && ')
@@ -227,8 +227,8 @@ class TestTransformerManager(ResourceTestBase):
 
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
-            assert container.volume_mounts[0].mount_path == '/etc/grid-security-ro'
-            assert called_job.spec.template.spec.volumes[0].secret.secret_name == 'x509'
+            assert container.volume_mounts[1].mount_path == '/etc/grid-security-ro'
+            assert called_job.spec.template.spec.volumes[1].secret.secret_name == 'x509'
 
             assert container.volume_mounts[1].mount_path == '/data'
             assert called_job.spec.template.spec.volumes[1].host_path.path == '/tmp/foo'
@@ -270,11 +270,11 @@ class TestTransformerManager(ResourceTestBase):
                 generated_code_cm="my-config-map")
             called_job = mock_kubernetes.mock_calls[1][2]['body']
             container = called_job.spec.template.spec.containers[0]
-            config_map_vol_mount = container.volume_mounts[1]
+            config_map_vol_mount = container.volume_mounts[2]
             assert config_map_vol_mount.name == 'generated-code'
             assert config_map_vol_mount.mount_path == '/generated'
 
-            config_map_vol = called_job.spec.template.spec.volumes[1]
+            config_map_vol = called_job.spec.template.spec.volumes[2]
             assert config_map_vol.name == 'generated-code'
             assert config_map_vol.config_map.name == 'my-config-map'
 
@@ -501,7 +501,7 @@ class TestTransformerManager(ResourceTestBase):
                 result_destination='object-store', result_format='arrow', x509_secret=None,
                 generated_code_cm=None)
             called_deployment = mock_api.mock_calls[1][2]['body']
-            assert len(called_deployment.spec.template.spec.containers) == 1
+            assert len(called_deployment.spec.template.spec.containers) == 2
             container = called_deployment.spec.template.spec.containers[0]
             assert len(container.volume_mounts) == 0
             assert len(called_deployment.spec.template.spec.volumes) == 0
