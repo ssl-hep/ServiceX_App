@@ -100,6 +100,10 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_MIN_REPLICAS': 3,
             'TRANSFORMER_MAX_REPLICAS': 17,
+            'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
+            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_LANGUAGE': 'python',
+            'TRANSFORMER_EXEC': 'transform_data.py'
         }
 
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
@@ -161,7 +165,11 @@ class TestTransformerManager(ResourceTestBase):
             'MINIO_SECRET_KEY': 'shhh',
             'TRANSFORMER_AUTOSCALE_ENABLED': False,
             'TRANSFORMER_CPU_LIMIT': 1,
-            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
+            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
+            'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
+            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_LANGUAGE': 'python',
+            'TRANSFORMER_EXEC': 'transform_data.py'
         }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
@@ -196,7 +204,11 @@ class TestTransformerManager(ResourceTestBase):
             'MINIO_SECRET_KEY': 'shhh',
             'TRANSFORMER_LOCAL_PATH': '/tmp/foo',
             'TRANSFORMER_CPU_LIMIT': 1,
-            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
+            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
+            'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
+            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_LANGUAGE': 'python',
+            'TRANSFORMER_EXEC': 'transform_data.py'
         }
 
         transformer = TransformerManager('external-kubernetes')
@@ -282,7 +294,11 @@ class TestTransformerManager(ResourceTestBase):
             'MINIO_ACCESS_KEY': 'itsame',
             'MINIO_SECRET_KEY': 'shhh',
             'TRANSFORMER_CPU_LIMIT': 1,
-            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
+            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
+            'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
+            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_LANGUAGE': 'python',
+            'TRANSFORMER_EXEC': 'transform_data.py'
         }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
@@ -325,7 +341,11 @@ class TestTransformerManager(ResourceTestBase):
             'MINIO_SECRET_KEY': 'shhh',
             'MINIO_ENCRYPT': 'True',
             'TRANSFORMER_CPU_LIMIT': 1,
-            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
+            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
+            'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
+            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_LANGUAGE': 'python',
+            'TRANSFORMER_EXEC': 'transform_data.py'
         }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
@@ -364,7 +384,11 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM': 'my-pvc',
             'TRANSFORMER_PERSISTENCE_SUBDIR': 'output-data',
             'TRANSFORMER_AUTOSCALE_ENABLED': False,
-            'TRANSFORMER_CPU_LIMIT': 1
+            'TRANSFORMER_CPU_LIMIT': 1,
+            'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
+            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_LANGUAGE': 'python',
+            'TRANSFORMER_EXEC': 'transform_data.py'
         }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
@@ -406,7 +430,11 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_PERSISTENCE_PROVIDED_CLAIM': None,
             'TRANSFORMER_PERSISTENCE_SUBDIR': 'output-data',
             'TRANSFORMER_AUTOSCALE_ENABLED': False,
-            'TRANSFORMER_CPU_LIMIT': 1
+            'TRANSFORMER_CPU_LIMIT': 1,
+            'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
+            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_LANGUAGE': 'python',
+            'TRANSFORMER_EXEC': 'transform_data.py'
         }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
@@ -455,7 +483,11 @@ class TestTransformerManager(ResourceTestBase):
             'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
             'TRANSFORMER_MIN_REPLICAS': 3,
             'TRANSFORMER_MAX_REPLICAS': 17,
-            'TRANSFORMER_X509_SECRET': None
+            'TRANSFORMER_X509_SECRET': None,
+            'TRANSFORMER_SIDECAR_VOLUME_PATH': '/servicex/output',
+            'TRANSFORMER_SCIENCE_IMAGE': 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_LANGUAGE': 'python',
+            'TRANSFORMER_EXEC': 'transform_data.py'
         }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
