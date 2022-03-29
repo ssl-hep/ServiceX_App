@@ -143,7 +143,7 @@ class TestTransformerManager(ResourceTestBase):
             assert autoscaling_spec.scale_target_ref.name == 'transformer-1234'
             assert autoscaling_spec.target_cpu_utilization_percentage == 30
 
-            assert len(called_deployment.spec.template.spec.volumes) == 1
+            assert len(called_deployment.spec.template.spec.volumes) == 2
             volume = called_deployment.spec.template.spec.volumes[0].secret
             assert volume.secret_name == 'x509'
 
