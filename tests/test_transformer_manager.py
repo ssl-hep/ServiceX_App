@@ -237,7 +237,10 @@ class TestTransformerManager(ResourceTestBase):
             'MINIO_ACCESS_KEY': 'itsame',
             'MINIO_SECRET_KEY': 'shhh',
             'TRANSFORMER_CPU_LIMIT': 1,
-            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30
+            'TRANSFORMER_CPU_SCALE_THRESHOLD': 30,
+            'TRANSFORMER_SCIENCE_IMAGE' = 'pondd/servicex_yt_transformer:sidecar',
+            'TRANSFORMER_LANGUAGE' = 'python',
+            'TRANSFORMER_EXEC' = 'transform_data.py',
         }
         transformer.persistent_volume_claim_exists = mocker.Mock(return_value=True)
 
