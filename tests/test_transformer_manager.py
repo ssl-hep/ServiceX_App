@@ -144,7 +144,7 @@ class TestTransformerManager(ResourceTestBase):
             assert autoscaling_spec.target_cpu_utilization_percentage == 30
 
             assert len(called_deployment.spec.template.spec.volumes) == 2
-            volume = called_deployment.spec.template.spec.volumes[0].secret
+            volume = called_deployment.spec.template.spec.volumes[1].secret
             assert volume.secret_name == 'x509'
 
     def test_launch_transformer_jobs_no_autoscaler(self, mocker):
