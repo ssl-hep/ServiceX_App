@@ -40,4 +40,4 @@ RUN chmod +x boot.sh
 USER servicex
 
 EXPOSE 5000
-#ENTRYPOINT ["./boot.sh"]
+ENTRYPOINT ["./boot.sh"]
