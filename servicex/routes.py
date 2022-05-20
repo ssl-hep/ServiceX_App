@@ -48,6 +48,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     from servicex.resources.transformation.get_one import TransformationRequest
     from servicex.resources.transformation.errors import TransformErrors
     from servicex.resources.transformation.deployment import DeploymentStatus
+    from servicex.resources.transformation.delete_results import DeleteTransformResults
 
     from servicex.resources.users.all_users import AllUsers
     from servicex.resources.users.token_refresh import TokenRefresh
@@ -119,6 +120,7 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     prefix = "/servicex/transformation"
     api.add_resource(SubmitTransformationRequest, prefix)
     api.add_resource(AllTransformationRequests, prefix)
+    api.add_resource(DeleteTransformResults, prefix)
     prefix += "/<string:request_id>"
     api.add_resource(TransformationRequest, prefix)
     api.add_resource(TransformationStatus, prefix + "/status")
@@ -148,11 +150,3 @@ def add_routes(api, transformer_manager, rabbit_mq_adaptor,
     TransformerFileComplete.make_api(transformer_manager)
     api.add_resource(TransformerFileComplete,
                      '/servicex/internal/transformation/<string:request_id>/file-complete')
-
-    StorageManager.make_api(storage_manager)
-    api.add_resource(StorageManager,
-                     '/servicex/internal/storage/<string:bucket_id>')
-    api.add_resource(StorageManager,
-                     '/servicex/internal/storage/<string:bucket_id>/<string:object_name>')
-    api.add_resource(StorageManager,
-                     '/servicex/internal/storage/cleanup')
