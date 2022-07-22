@@ -180,6 +180,11 @@ class TransformRequest(db.Model):
             'workflow-name': self.workflow_name,
             'generated-code-cm': self.generated_code_cm,
             'status': self.status,
+            'submit-time': self.submit_time,
+            'finish-time' : self.finish_time,
+            'files-processed': self.files_processed,
+            'files-skipped': self.files_skipped,
+            'files-remaining': self.files_remaining,
             'failure-info': self.failure_description,
             'app-version': self.app_version,
             'code-gen-image': self.code_gen_image
