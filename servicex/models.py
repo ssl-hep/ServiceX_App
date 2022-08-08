@@ -167,7 +167,8 @@ class TransformRequest(db.Model):
         db.session.flush()
 
     def to_json(self):
-        return {
+        iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
+        result_obj =  {
             'request_id': self.request_id,
             'did': self.did,
             'columns': self.columns,
@@ -180,15 +181,18 @@ class TransformRequest(db.Model):
             'workflow-name': self.workflow_name,
             'generated-code-cm': self.generated_code_cm,
             'status': self.status,
-            'submit-time': self.submit_time,
-            'finish-time' : self.finish_time,
-            'files-processed': self.files_processed,
-            'files-skipped': self.files_skipped,
-            'files-remaining': self.files_remaining,
             'failure-info': self.failure_description,
             'app-version': self.app_version,
-            'code-gen-image': self.code_gen_image
+            'code-gen-image': self.code_gen_image,
+            'files-processed': self.files_processed,
+            'files-skipped': self.files_failed,
+            'files-remaining': self.files_remaining,
+            'submit-time': str(self.submit_time.strftime(iso_fmt)),
+            'finish-time' : str(self.finish_time)
         }
+        if self.finish_time is not None:
+            result_obj['finish-time'] = str(self.finish_time.strftime(iso_fmt))
+        return result_obj
 
     @classmethod
     def return_json(cls, requests: Iterable['TransformRequest']):
