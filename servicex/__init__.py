@@ -26,6 +26,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import logging
+import logstash
 from distutils.util import strtobool
 import sys
 
@@ -97,13 +98,18 @@ def create_app(test_config=None,
 
     # setup logging
     instance = os.environ.get('INSTANCE_NAME', 'Unknown')
+
     formatter = ServiceXFormatter('%(levelname)s ' +
                                   f"{instance} servicex_app " +
                                   '%(requestId)s %(message)s')
-    servicex_handler = logging.StreamHandler()
-    servicex_handler.setFormatter(formatter)
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(formatter)
+
+    logstash_handler = logstash.TCPLogstashHandler('servicex.atlas-ml.org', 5959, version=1)
+
     if app.debug:
-        servicex_handler.setLevel('DEBUG')
+        stream_handler.setLevel('DEBUG')
+        logstash_handler.setLevel('DEBUG')
         app.logger.level = logging.DEBUG
     else:
         levels = {
@@ -114,14 +120,17 @@ def create_app(test_config=None,
             'ERROR': logging.ERROR,
             'CRITICAL': logging.CRITICAL
         }
-        level = os.environ.get('LOG_LEVEL', 'WARNING').upper()
-        servicex_handler.setLevel(levels[level])
+        level = os.environ.get('LOG_LEVEL', 'INFO').upper()
+        stream_handler.setLevel(levels[level])
+        logstash_handler.setLevel(levels[level])
         app.logger.level = levels[level]
 
     # remove current handlers and add our own
     for h in app.logger.handlers:
         app.logger.removeHandler(h)
-    app.logger.addHandler(servicex_handler)
+    app.logger.addHandler(stream_handler)
+    app.logger.addHandler(logstash_handler)
+
     app.logger.info("Initialized logging")
 
     if not test_config:
