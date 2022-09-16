@@ -33,4 +33,4 @@ class TransformationStatusInternal(ServiceXResource):
             submitted_request.save_to_db()
             db.session.commit()
         else:
-            current_app.logger.info("Metric", extra={'requestId': request_id, 'metric': {status}})
+            current_app.logger.info("Metric", extra={'requestId': request_id, 'metric': status})
