@@ -132,8 +132,6 @@ def create_app(test_config=None,
 
     logstash_host = os.environ.get('LOGSTASH_HOST')
     logstash_port = os.environ.get('LOGSTASH_PORT')
-    logstash_host = 'servicex.atlas-ml.org'
-    logstash_port = 5959
 
     levels = {
         'DEBUG': logging.DEBUG,
