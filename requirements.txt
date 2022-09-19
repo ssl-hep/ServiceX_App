@@ -16,4 +16,4 @@ cryptography == 38.0.1
 bootstrap-flask == 2.1.0
 humanize
 MarkupSafe == 2.0.1
-python-logstash
+python-logstash == 0.4.8
