@@ -72,7 +72,7 @@ class TransformerFileComplete(ServiceXResource):
 
         files_remaining = transform_req.files_remaining
         if files_remaining is not None and files_remaining == 0:
-            self.transform_complete(self.logger, transform_req, self.transformer_manager)
+            self.transform_complete(current_app.logger, transform_req, self.transformer_manager)
         db.session.commit()
 
         return "Ok"

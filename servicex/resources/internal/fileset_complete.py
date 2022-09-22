@@ -55,4 +55,6 @@ class FilesetComplete(ServiceXResource):
         db.session.commit()
 
         if summary['files'] == 0:
-            TransformerFileComplete.transform_complete(self.logger, rec, self.transformer_manager)
+            TransformerFileComplete.transform_complete(current_app.logger,
+                                                       rec,
+                                                       self.transformer_manager)
