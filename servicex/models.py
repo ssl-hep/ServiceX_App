@@ -168,7 +168,7 @@ class TransformRequest(db.Model):
 
     def to_json(self):
         iso_fmt = '%Y-%m-%dT%H:%M:%S.%fZ'
-        result_obj =  {
+        result_obj = {
             'request_id': self.request_id,
             'did': self.did,
             'columns': self.columns,
@@ -188,7 +188,7 @@ class TransformRequest(db.Model):
             'files-skipped': self.files_failed,
             'files-remaining': self.files_remaining,
             'submit-time': str(self.submit_time.strftime(iso_fmt)),
-            'finish-time' : str(self.finish_time)
+            'finish-time': str(self.finish_time)
         }
         if self.finish_time is not None:
             result_obj['finish-time'] = str(self.finish_time.strftime(iso_fmt))
