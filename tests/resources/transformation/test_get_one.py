@@ -23,7 +23,12 @@ class TestTransformationRequest(ResourceTestBase):
                                  'workflow-name': None,
                                  'generated-code-cm': None,
                                  'status': "Submitted",
+                                 'submit-time': '0001-01-01T00:00:00.000000Z',
                                  'failure-info': None,
+                                 'files-processed': 0,
+                                 'files-remaining': None,
+                                 'files-skipped': 0,
+                                 'finish-time': 'None',
                                  'app-version': "1.0.1",
                                  'code-gen-image': 'sslhep/servicex_code_gen_func_adl_xaod:develop'
                                  }
@@ -65,7 +70,12 @@ class TestTransformationRequest(ResourceTestBase):
                                  'workflow-name': None,
                                  'generated-code-cm': None,
                                  'status': "Submitted",
+                                 'submit-time': '0001-01-01T00:00:00.000000Z',
                                  'failure-info': None,
+                                 'files-processed': 0,
+                                 'files-remaining': None,
+                                 'files-skipped': 0,
+                                 'finish-time': 'None',
                                  'app-version': "1.0.1",
                                  'code-gen-image': 'sslhep/servicex_code_gen_func_adl_xaod:develop'
                                  }
